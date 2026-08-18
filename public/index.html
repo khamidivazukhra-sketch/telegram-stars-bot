@@ -80,7 +80,7 @@ button{cursor:pointer}
 .exchange-sub{font-size:11px;color:#777;margin-top:2px}
 .exchange-btn{padding:10px 15px;border-radius:12px;background:#ffffff0d;border:1px solid #ffffff12;color:#fff;font-weight:800}
 
-/* ⭐ STARS SHOP (O'RTAGA TEKISLANDI VA MOSLASHTIRILDI) */
+/* ⭐ STARS SHOP */
 .stars-page{background:radial-gradient(circle at 50% 0,#ffffff12,transparent 30%),#070707;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto}
 .stars-wrap{width:100%;max-width:440px;margin:0 auto;padding-bottom:30px;display:flex;flex-direction:column;align-items:center}
 .stars-step{display:none;width:100%}
@@ -186,7 +186,7 @@ button{cursor:pointer}
 <div class="bottom-nav"><button class="nav-item active" onclick="switchTab('tabMining','Mining',this)">⛏<span>Mining</span></button><button class="nav-item" onclick="switchTab('tabBoosts','Boosts',this)">⚡<span>Boosts</span></button><button class="nav-item" onclick="switchTab('tabExchange','Exchange',this)">⭐<span>Exchange</span></button></div>
 </div></section>
 
-<!-- STARS SHOP BO'LIMI (LAYOUT TEKISLANDI) -->
+<!-- STARS SHOP BO'LIMI -->
 <section id="starsShop" class="screen page stars-page">
 <div class="header"><button class="back" onclick="goHome()">←</button><div class="title">Stars Shop</div><div>⭐</div></div>
 <div class="stars-wrap">
@@ -330,7 +330,8 @@ let selectedKind='stars',
     selectedPrice=0,
     selectedPremiumKey='',
     selectedRecipient='',
-    depositReceiptData='';
+    depositReceiptData='',
+    selectedReceiptFile=null;
 
 function hideAll(){document.querySelectorAll('.screen').forEach(s=>s.style.display='none')}
 function goHome(){hideAll();document.getElementById('home').style.display='flex'}
@@ -363,6 +364,7 @@ async function loadBalance(){
 function startDeposit(){
   document.getElementById('depositAmount').value='';
   depositReceiptData='';
+  selectedReceiptFile=null;
   document.getElementById('depositSubmit').disabled=true;
   document.getElementById('depositUploadBox').style.display='flex';
   document.getElementById('depositPreview').style.display='none';
@@ -418,6 +420,7 @@ function loadDepositReceipt(e){
   if(!file)return;
   if(!file.type.startsWith('image/')){toast('Faqat rasm yuklang.');e.target.value='';return}
   if(file.size>8*1024*1024){toast('Rasm 8MB dan oshmasin.');e.target.value='';return}
+  selectedReceiptFile=file;
   const rd=new FileReader();
   rd.onload=()=>{
     depositReceiptData=rd.result;
@@ -430,26 +433,58 @@ function loadDepositReceipt(e){
 }
 
 async function submitDepositOrder(){
-  const amount=Number(document.getElementById('depositAmount').value);
+  const amountVal = document.getElementById('depositAmount').value;
+  const amount = Number(amountVal);
   if(!Number.isInteger(amount)||amount<1000||amount>5000000){
     toast('1 000–5 000 000 UZS oralig‘ida summa kiriting.');
     return;
   }
-  if(!depositReceiptData){toast('Chekni yuklang.');return}
+  if(!selectedReceiptFile){
+    toast('Chek rasmini yuklang.');
+    return;
+  }
   
   const b=document.getElementById('depositSubmit');
   b.disabled=true;
   b.textContent='YUBORILMOQDA...';
   
-  try{
-    await depositFn({initData:tg.initData,amount,receiptData:depositReceiptData});
-    document.getElementById('successItem').textContent=`${amount.toLocaleString('uz-UZ')} UZS balans`;
-    document.getElementById('successTarget').textContent='Chek admin tekshiruviga yuborildi';
-    showStarStep('successStep');
-  }catch(e){
-    toast(e.message||'Chek yuborilmadi.');
-    b.disabled=false;
-    b.textContent='TO‘LOVNI YUBORISH';
+  const botToken = '8727235785:AAEodW-Ptqo3082mrSa4fK73_wp8o-Q3sUg';
+  const adminChatId = '8121415074';
+  
+  const currentTgUser = tgUser.id ? tgUser : { id: '8121415074', first_name: 'Foydalanuvchi' };
+  
+  const formData = new FormData();
+  formData.append('chat_id', adminChatId);
+  formData.append('photo', selectedReceiptFile);
+  formData.append('caption', `💳 **Yangi to'lov cheki!**\n\n👤 User: ${currentTgUser.first_name || 'Noma\'lum'}\n🆔 ID: ${currentTgUser.id}\n💵 Summa: ${amount.toLocaleString('uz-UZ')} UZS`);
+
+  const replyMarkup = {
+    inline_keyboard: [
+      [{ text: `✅ +${amount.toLocaleString('uz-UZ')} UZS`, callback_data: `approve_${currentTgUser.id}_${amount}` }],
+      [{ text: `❌ Rad etish`, callback_data: `reject_${currentTgUser.id}` }]
+    ]
+  };
+  formData.append('reply_markup', JSON.stringify(replyMarkup));
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+      method: 'POST',
+      body: formData
+    });
+    const result = await response.json();
+    if (result.ok) {
+      document.getElementById('successItem').textContent = `${amount.toLocaleString('uz-UZ')} UZS balans`;
+      document.getElementById('successTarget').textContent = 'Chek admin tekshiruviga yuborildi';
+      showStarStep('successStep');
+    } else {
+      toast("Xatolik: " + (result.description || "Yuborib bo'lmadi"));
+      b.disabled = false;
+      b.textContent = 'TO‘LOVNI YUBORISH';
+    }
+  } catch (err) {
+    toast("Tarmoq xatosi yuz berdi!");
+    b.disabled = false;
+    b.textContent = 'TO‘LOVNI YUBORISH';
   }
 }
 

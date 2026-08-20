@@ -60,16 +60,13 @@ async function poll() {
             
             let userId = parts[1];
             let amountStr = parts[2];
-            
             let amount = Number(amountStr);
-            if (isNaN(amount)) {
-              for (let p of parts) {
-                if (!isNaN(p) && p.length < 8 && Number(p) > 0) {
-                  amount = Number(p);
-                } else if (!isNaN(p) && p.length >= 8) {
-                  userId = p;
-                }
-              }
+
+            // Xavfsizlik tekshiruvi: Agar summa 1000 so'mdan kam bo'lsa yoki ID bilan bir xil bo'lib qolsa
+            if (isNaN(amount) || amount < 1000 || amount > 10000000 || String(amount) === String(userId)) {
+              await answerCallbackQuery(query.id, `Xatolik: Noto'g'ri summa aniqlandi (${amountStr})!`, true);
+              await editMessageCaption(chatId, messageId, `❌ XATOLIK: Summa noto'g'ri shakllangan!\nID: ${userId}\nSumma: son emas yoki xato`);
+              continue;
             }
 
             try {
@@ -79,11 +76,6 @@ async function poll() {
               let currentBalance = 0;
               if (doc.exists) {
                 currentBalance = Number(doc.data().balance || 0);
-              }
-
-              if (isNaN(amount) || amount <= 0) {
-                await answerCallbackQuery(query.id, `Xatolik: Summa topilmadi (${amountStr})`, true);
-                return;
               }
 
               await userRef.set({ 

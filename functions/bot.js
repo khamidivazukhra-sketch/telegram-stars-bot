@@ -4,7 +4,30 @@ import fetch from 'node-fetch';
 const db = admin.firestore();
 const BOT_TOKEN = '8727235785:AAEodW-Pfqo3082mrSa4fK73_wp8o-Q3sUg';
 
-// Webhook orqali kelgan update'larni boshqarish
+async function answerCallbackQuery(callbackQueryId, text, showAlert = false) {
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callback_query_id: callbackQueryId, text, show_alert: showAlert })
+    });
+  } catch (e) {
+    console.error("Answer error:", e);
+  }
+}
+
+async function editMessageCaption(chatId, messageId, caption) {
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageCaption`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, message_id: messageId, caption })
+    });
+  } catch (e) {
+    console.error("Edit error:", e);
+  }
+}
+
 export async function handleUpdate(reqBody, res) {
   try {
     if (reqBody.callback_query) {
@@ -13,15 +36,21 @@ export async function handleUpdate(reqBody, res) {
       const chatId = query.message.chat.id;
       const messageId = query.message.message_id;
 
+      // 1. Tugma bosilishi bilan aylanishini to'xtatish uchun darhol javob yuboramiz
+      await answerCallbackQuery(query.id, "Bajarilmoqda...");
+
       if (dataStr.startsWith('approve_')) {
         const parts = dataStr.split('_');
         let userId = parts[1];
+        if (userId === 'deposit' && parts.length > 2) {
+          userId = parts[2];
+        }
+
         let amountStr = parts[parts.length - 1];
         let amount = Number(amountStr);
 
         if (isNaN(amount) || amount < 1000 || amount > 10000000) {
           await answerCallbackQuery(query.id, `Xatolik: Noto'g'ri summa!`, true);
-          await editMessageCaption(chatId, messageId, `❌ XATOLIK: Summa xato!`);
           return res.status(200).send('OK');
         }
 
@@ -50,29 +79,5 @@ export async function handleUpdate(reqBody, res) {
   } catch (err) {
     console.error('Webhook xatosi:', err);
     res.status(500).send('Error');
-  }
-}
-
-async function answerCallbackQuery(callbackQueryId, text, showAlert = false) {
-  try {
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ callback_query_id: callbackQueryId, text, show_alert: showAlert })
-    });
-  } catch (e) {
-    console.error("Answer error:", e);
-  }
-}
-
-async function editMessageCaption(chatId, messageId, caption) {
-  try {
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageCaption`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, message_id: messageId, caption })
-    });
-  } catch (e) {
-    console.error("Edit error:", e);
   }
 }

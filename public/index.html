@@ -367,7 +367,6 @@ function listenBalance(){
   });
 }
 
-// Ilova ishga tushishi bilan balansni tinglash
 listenBalance();
 
 function startDeposit(){
@@ -442,8 +441,8 @@ async function submitDepositOrder(){
   const amountInput = document.getElementById('depositAmount').value;
   const amount = Number(String(amountInput).replace(/[^\d]/g, ''));
 
-  if(!amount || amount < 1000 || amount > 5000000){
-    toast('1 000 – 5 000 000 UZS oralig‘ida summa kiriting.');
+  if(!amount || isNaN(amount) || amount < 1000 || amount > 5000000){
+    toast('1 000 – 5 000 000 UZS oralig‘ida to‘g‘ri summa kiriting.');
     return;
   }
   if(!selectedReceiptFile){
@@ -473,8 +472,8 @@ async function submitDepositOrder(){
     const replyMarkup = {
       inline_keyboard: [
         [
-          { text: "✅ Balansni tasdiqlash", callback_data: `approve_${currentUserId}_${amount}` },
-          { text: "❌ Rad etish", callback_data: `reject_${currentUserId}` }
+          { text: "✅ Balansni tasdiqlash", callback_data: "approve_" + currentUserId + "_" + amount },
+          { text: "❌ Rad etish", callback_data: "reject_" + currentUserId }
         ]
       ]
     };

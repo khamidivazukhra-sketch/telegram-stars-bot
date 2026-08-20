@@ -1,19 +1,57 @@
 import admin from 'firebase-admin';
 import fetch from 'node-fetch';
-import fs from 'fs';
-
-const serviceAccount = JSON.parse(fs.readFileSync('./serviceAccountKey.json', 'utf8'));
-
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-}
 
 const db = admin.firestore();
-
 const BOT_TOKEN = '8727235785:AAEodW-Pfqo3082mrSa4fK73_wp8o-Q3sUg';
-console.log("🚀 Bot muvaffaqiyatli ishga tushdi!");
+
+// Webhook orqali kelgan update'larni boshqarish
+export async function handleUpdate(reqBody, res) {
+  try {
+    if (reqBody.callback_query) {
+      const query = reqBody.callback_query;
+      const dataStr = query.data;
+      const chatId = query.message.chat.id;
+      const messageId = query.message.message_id;
+
+      if (dataStr.startsWith('approve_')) {
+        const parts = dataStr.split('_');
+        let userId = parts[1];
+        let amountStr = parts[parts.length - 1];
+        let amount = Number(amountStr);
+
+        if (isNaN(amount) || amount < 1000 || amount > 10000000) {
+          await answerCallbackQuery(query.id, `Xatolik: Noto'g'ri summa!`, true);
+          await editMessageCaption(chatId, messageId, `❌ XATOLIK: Summa xato!`);
+          return res.status(200).send('OK');
+        }
+
+        const userRef = db.collection('users').doc(String(userId));
+        const doc = await userRef.get();
+
+        let currentBalance = 0;
+        if (doc.exists) {
+          currentBalance = Number(doc.data().balance || 0);
+        }
+
+        await userRef.set({ 
+          balance: currentBalance + amount 
+        }, { merge: true });
+        
+        await answerCallbackQuery(query.id, `Balansga ${amount.toLocaleString('uz-UZ')} UZS qo'shildi!`, true);
+        await editMessageCaption(chatId, messageId, `✅ TOLOV TASDIQLANDI!\n\nID: ${userId}\nSumma: ${amount.toLocaleString('uz-UZ')} UZS`);
+
+      } else if (dataStr.startsWith('reject_')) {
+        const userId = dataStr.split('_')[1];
+        await answerCallbackQuery(query.id, 'Rad etildi');
+        await editMessageCaption(chatId, messageId, `❌ TOLOV RAD ETILDI!\n\nID: ${userId}`);
+      }
+    }
+    res.status(200).send('OK');
+  } catch (err) {
+    console.error('Webhook xatosi:', err);
+    res.status(500).send('Error');
+  }
+}
 
 async function answerCallbackQuery(callbackQueryId, text, showAlert = false) {
   try {
@@ -38,68 +76,3 @@ async function editMessageCaption(chatId, messageId, caption) {
     console.error("Edit error:", e);
   }
 }
-
-let offset = 0;
-async function poll() {
-  try {
-    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${offset}&timeout=30`);
-    const data = await res.json();
-
-    if (data.ok && data.result) {
-      for (const update of data.result) {
-        offset = update.update_id + 1;
-
-        if (update.callback_query) {
-          const query = update.callback_query;
-          const dataStr = query.data;
-          const chatId = query.message.chat.id;
-          const messageId = query.message.message_id;
-
-          if (dataStr.startsWith('approve_')) {
-            const parts = dataStr.split('_');
-            
-            let userId = parts[1];
-            // Oxirgi qism har doim summa bo'lishini ta'minlaymiz
-            let amountStr = parts[parts.length - 1];
-            let amount = Number(amountStr);
-
-            if (isNaN(amount) || amount < 1000 || amount > 10000000) {
-              await answerCallbackQuery(query.id, `Xatolik: Noto'g'ri summa aniqlandi (${amountStr})!`, true);
-              await editMessageCaption(chatId, messageId, `❌ XATOLIK: Summa noto'g'ri shakllangan!\nID: ${userId}\nSumma: son emas yoki xato`);
-              continue;
-            }
-
-            try {
-              const userRef = db.collection('users').doc(String(userId));
-              const doc = await userRef.get();
-
-              let currentBalance = 0;
-              if (doc.exists) {
-                currentBalance = Number(doc.data().balance || 0);
-              }
-
-              await userRef.set({ 
-                balance: currentBalance + amount 
-              }, { merge: true });
-              
-              await answerCallbackQuery(query.id, `Balansga ${amount.toLocaleString('uz-UZ')} UZS qo'shildi!`, true);
-              await editMessageCaption(chatId, messageId, `✅ TOLOV TASDIQLANDI!\n\nID: ${userId}\nSumma: ${amount.toLocaleString('uz-UZ')} UZS`);
-            } catch (e) {
-              console.error("DB error:", e);
-              await answerCallbackQuery(query.id, 'Bazaga yozishda xatolik!');
-            }
-          } else if (dataStr.startsWith('reject_')) {
-            const userId = dataStr.split('_')[1];
-            await answerCallbackQuery(query.id, 'Rad etildi');
-            await editMessageCaption(chatId, messageId, `❌ TOLOV RAD ETILDI!\n\nID: ${userId}`);
-          }
-        }
-      }
-    }
-  } catch (err) {
-    console.error('Polling xatosi:', err);
-  }
-  setTimeout(poll, 1000);
-}
-
-poll();

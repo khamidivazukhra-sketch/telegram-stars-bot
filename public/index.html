@@ -81,6 +81,37 @@ button{cursor:pointer}
 .stars-step{display:none;width:100%}
 .stars-step.active{display:block;animation:fade .25s}
 
+.shop-subtabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;width:100%;margin:14px 0 6px;background:#ffffff06;padding:4px;border-radius:16px;border:1px solid #ffffff0a}
+.shop-subtab{padding:8px 4px;border-radius:12px;border:0;background:transparent;color:#777;font-weight:800;font-size:11px;text-align:center;transition:.2s}
+.shop-subtab.active{background:#fff;color:#111}
+.shop-tabpane{display:none;width:100%}
+.shop-tabpane.active{display:block;animation:fade .2s}
+
+.leader-list{display:grid;gap:9px;width:100%;margin-top:10px}
+.leader-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:18px;background:linear-gradient(145deg,#ffffff08,#ffffff02);border:1px solid #ffffff0d}
+.leader-left{display:flex;align-items:center;gap:12px}
+
+.leader-avatar-wrap{position:relative;width:44px;height:44px;display:grid;place-items:center}
+.leader-avatar{width:36px;height:36px;border-radius:50%;background:#333;display:grid;place-items:center;font-weight:900;font-size:14px;color:#fff;overflow:hidden;z-index:2}
+
+.rank-1-frame::before{content:'';position:absolute;inset:-3px;border-radius:50%;background:linear-gradient(45deg,#ffD700,#ff8c00,#ffD700,#fff);animation:rotateBorder 2.5s linear infinite;z-index:1;}
+.rank-2-frame::before{content:'';position:absolute;inset:-3px;border-radius:50%;background:linear-gradient(45deg,#e0e0e0,#888,#fff,#ccc);animation:rotateBorder 3s linear infinite;z-index:1;}
+.rank-3-frame::before{content:'';position:absolute;inset:-3px;border-radius:50%;background:linear-gradient(45deg,#cd7f32,#ffaa77,#8b4513,#ffbb88);animation:rotateBorder 3s linear infinite;z-index:1;}
+.rank-4-frame::before{content:'';position:absolute;inset:-3px;border-radius:50%;background:linear-gradient(45deg,#00d2ff,#3a7bd5,#00d2ff,#fff);animation:pulseBorder 2s ease-in-out infinite;z-index:1;}
+.rank-5-frame::before{content:'';position:absolute;inset:-3px;border-radius:50%;background:linear-gradient(45deg,#f857a6,#ff5858,#a855f7,#fff);animation:pulseBorder 2s ease-in-out infinite;z-index:1;}
+
+@keyframes rotateBorder{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+@keyframes pulseBorder{0%,100%{opacity:0.6;transform:scale(0.98)}50%{opacity:1;transform:scale(1.03)}}
+
+.leader-rank-badge{width:22px;height:22px;border-radius:50%;position:absolute;bottom:-3px;right:-3px;background:#222;border:2px solid #111;color:#fff;font-size:9px;font-weight:900;display:grid;place-items:center;z-index:3}
+.leader-item:nth-child(1) .leader-rank-badge{background:#ffd700;color:#111}
+.leader-item:nth-child(2) .leader-rank-badge{background:#e0e0e0;color:#111}
+.leader-item:nth-child(3) .leader-rank-badge{background:#cd7f32;color:#fff}
+
+.leader-name{font-size:14px;font-weight:800;color:#fff}
+.leader-sub{font-size:10px;color:#777;margin-top:2px}
+.leader-amount{font-size:14px;font-weight:900;color:#fff}
+
 .balance-card{padding:18px;border-radius:23px;background:linear-gradient(145deg,#1c1c1c,#0d0d0d);border:1px solid #ffffff13;box-shadow:0 22px 65px #0008;width:100%}
 .balance-top{display:flex;justify-content:space-between;align-items:center;color:#777;font-size:10px;letter-spacing:1px;font-weight:800}
 .balance-value{font-size:30px;font-weight:900;color:#fff;margin-top:5px}
@@ -123,6 +154,11 @@ button{cursor:pointer}
 .inputbox{display:flex;align-items:center;min-height:56px;padding:0 14px;border-radius:17px;background:#0e0e0e;border:1px solid #ffffff10}
 .inputbox span{color:#777;font-weight:800}
 .inputbox input,.amount-input{width:100%;border:0;outline:0;background:transparent;color:#fff;font-size:16px;padding:0 8px}
+
+.modes-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.mode-btn{padding:12px;border-radius:14px;background:#ffffff05;border:1px solid #ffffff0d;color:#777;font-weight:800;font-size:12px;text-align:center;cursor:pointer;transition:.2s}
+.mode-btn.active{background:#fff;color:#111;border-color:#fff}
+
 .warning{display:flex;gap:10px;margin-top:10px;padding:13px;border-radius:16px;background:#ffffff04;border:1px solid #ffffff07}
 .warning strong{font-size:11px}
 .warning p{color:#777;font-size:10px;margin-top:3px;line-height:1.45}
@@ -166,7 +202,10 @@ button{cursor:pointer}
 <section id="home" class="screen"><div class="home-content">
 <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2l2.8 7.2L22 12l-7.2 2.8L12 22l-2.8-7.2L2 12l7.2-2.8L12 2z"/></svg></div>
 <h1>Coming Soon</h1><p class="subtitle">Something amazing is on the way</p><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-<button class="button" onclick="openPuzzle()">🧩 Play Puzzle</button><button class="button dark-button" onclick="openXO()">✕ X-O Game</button><button class="button dark-button stars-home" onclick="openStarsShop()">⭐ Stars Shop</button><button class="button dark-button" onclick="openMining()">⛏ Mining Game</button>
+<button class="button" onclick="openPuzzle()">🧩 Play Puzzle</button>
+<button class="button dark-button" onclick="openXO()">✕ X-O Game</button>
+<button class="button dark-button stars-home" onclick="openStarsShop()">⭐ Stars Shop</button>
+<button class="button dark-button" onclick="openMining()">⛏ Mining Game</button>
 </div></section>
 
 <section id="puzzleScreen" class="screen page"><div class="header"><button class="back" onclick="goHome()">←</button><div class="title">Puzzle</div><div></div></div><div class="center"><div class="info">Arrange the numbers from 1 to 8</div><div id="puzzle" class="puzzle"></div><button class="restart" onclick="startPuzzle()">↻ Restart Puzzle</button></div></section>
@@ -177,7 +216,7 @@ button{cursor:pointer}
 <section id="mineScreen" class="screen page"><div class="header"><button class="back" onclick="goHome()">←</button><div class="title" id="mineTitle">Mining</div><div></div></div><div class="mine-wrapper">
 <div id="tabMining" class="tab-content active"><div class="mine-card"><div class="coin-label">Mined Balance</div><div class="coin-balance" id="userCoins">0</div><button class="hammer" onclick="tapCoin(event)"><svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3l3.7 3.7-3 3L1.7 4.7C.6 7.1 1 10.1 3 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.4-.4.4-1 0-1.4z"/></svg></button><div class="energy"><span>Energy</span><span id="energyText">100 / 100</span></div><div class="bar"><div id="energyFill" class="fill" style="width:100%"></div></div></div></div>
 <div id="tabBoosts" class="tab-content"><div class="exchange-grid"><div class="exchange-card"><div class="exchange-left"><div class="exchange-icon">⚡</div><div><div class="exchange-title">Multitap</div><div class="exchange-sub">+1 tap power</div></div></div><button id="btnMultitap" class="exchange-btn" onclick="buyMultitap()">100</button></div><div class="exchange-card"><div class="exchange-left"><div class="exchange-icon">🔋</div><div><div class="exchange-title">Energy Limit</div><div class="exchange-sub">+50 max energy</div></div></div><button id="btnEnergy" class="exchange-btn" onclick="buyEnergy()">150</button></div></div></div>
-<div id="tabExchange" class="tab-content"><div class="exchange-grid"><div class="exchange-card"><div class="exchange-left"><div class="exchange-icon">⭐</div><div><div class="exchange-title">25 Stars Gift</div><div class="exchange-sub">250,000 Coins</div></div></div><button class="exchange-btn" onclick="requestExchange(250000,'25 Stars Gift')">250K</button></div><div class="exchange-card"><div class="exchange-left"><div class="exchange-icon">⭐</div><div><div class="exchange-title">50 Stars Gift</div><div class="exchange-sub">450,000 Coins</div></div></div><button class="exchange-btn" onclick="requestExchange(450000,'50 Stars Gift')">450K</button></div><div class="exchange-card"><div class="exchange-left"><div class="exchange-icon">⭐</div><div><div class="exchange-title">100 Stars Gift</div><div class="exchange-sub">750,000 Coins</div></div></div><button class="exchange-btn" onclick="requestExchange(750000,'100 Stars Gift')">750K</button></div></div></div>
+<div id="tabExchange" class="tab-content"><div class="exchange-grid"><div class="exchange-card"><div class="exchange-left"><div class="exchange-icon">⭐</div><div><div class="exchange-title">25 Stars Gift</div><div class="exchange-sub">250,000 Coins</div></div></div><button class="exchange-btn" onclick="requestExchange(250000)">250K</button></div><div class="exchange-card"><div class="exchange-left"><div class="exchange-icon">⭐</div><div><div class="exchange-title">50 Stars Gift</div><div class="exchange-sub">450,000 Coins</div></div></div><button class="exchange-btn" onclick="requestExchange(450000)">450K</button></div><div class="exchange-card"><div class="exchange-left"><div class="exchange-icon">⭐</div><div><div class="exchange-title">100 Stars Gift</div><div class="exchange-sub">750,000 Coins</div></div></div><button class="exchange-btn" onclick="requestExchange(750000)">750K</button></div></div></div>
 <div class="bottom-nav"><button class="nav-item active" onclick="switchTab('tabMining','Mining',this)">⛏<span>Mining</span></button><button class="nav-item" onclick="switchTab('tabBoosts','Boosts',this)">⚡<span>Boosts</span></button><button class="nav-item" onclick="switchTab('tabExchange','Exchange',this)">⭐<span>Exchange</span></button></div>
 </div></section>
 
@@ -192,26 +231,60 @@ button{cursor:pointer}
     </div>
     <div class="hero">
       <div class="hero-star">⭐</div>
-      <small>TELEGRAM STARS</small>
+      <small>TELEGRAM STARS & MORE</small>
       <h2>Stars Shop</h2>
-      <p>Starsni balansdan sotib oling. Qaysi username'ga yuborilishini o‘zingiz tanlaysiz.</p>
+      <p>Stars, sovg'alar va premium paketlarni qulay xarid qiling.</p>
     </div>
-    <div class="section-title">STARS PAKETLARI</div>
-    <div class="pack-grid">
-      <button class="pack" onclick="selectStarsPack(50,10000)"><div class="star">⭐</div><strong>50 Stars</strong><div class="pprice">10 000 UZS</div><span class="ton">0.57 TON</span></button>
-      <button class="pack" onclick="selectStarsPack(100,19500)"><span class="tag">POPULAR</span><div class="star">⭐</div><strong>100 Stars</strong><div class="pprice">19 500 UZS</div><span class="ton">1.14 TON</span></button>
-      <button class="pack" onclick="selectStarsPack(200,39500)"><div class="star">⭐</div><strong>200 Stars</strong><div class="pprice">39 500 UZS</div><span class="ton">2.30 TON</span></button>
-      <button class="pack" onclick="selectStarsPack(300,59500)"><div class="star">⭐</div><strong>300 Stars</strong><div class="pprice">59 500 UZS</div><span class="ton">3.46 TON</span></button>
-      <button class="pack" onclick="selectStarsPack(500,99000)"><span class="tag">HOT</span><div class="star">⭐</div><strong>500 Stars</strong><div class="pprice">99 000 UZS</div><span class="ton">5.76 TON</span></button>
-      <button class="pack" onclick="selectStarsPack(1000,197500)"><span class="tag">BEST</span><div class="star">⭐</div><strong>1000 Stars</strong><div class="pprice">197 500 UZS</div><span class="ton">11.52 TON</span></button>
+
+    <div class="shop-subtabs">
+      <button id="subtabBtnStars" class="shop-subtab active" onclick="switchShopSubtab('stars')">⭐ Stars</button>
+      <button id="subtabBtnGifts" class="shop-subtab" onclick="switchShopSubtab('gifts')">🎁 Giftlar</button>
+      <button id="subtabBtnPremiums" class="shop-subtab" onclick="switchShopSubtab('premiums')">👑 Premium</button>
+      <button id="subtabBtnTop" class="shop-subtab" onclick="switchShopSubtab('top')">🏆 Top</button>
     </div>
-    <div class="section-title">TELEGRAM PREMIUM</div>
-    <div class="premium-list">
-      <div class="premium"><div class="icon">👑</div><div class="premium-info"><strong>3 oy Premium</strong><small>9.2 TON · 159 000 UZS</small></div><button onclick="selectPremium('3m')">159K</button></div>
-      <div class="premium"><div class="icon">👑</div><div class="premium-info"><strong>6 oy Premium</strong><small>12.3 TON · 212 000 UZS</small></div><button onclick="selectPremium('6m')">212K</button></div>
-      <div class="premium"><div class="icon">👑</div><div class="premium-info"><strong>1 yil Premium</strong><small>22.24 TON · 384 000 UZS</small></div><button onclick="selectPremium('1y')">384K</button></div>
+
+    <div id="shopPaneStars" class="shop-tabpane active">
+      <div class="section-title" style="margin-top:10px">STARS PAKETLARI</div>
+      <div class="pack-grid">
+        <button class="pack" onclick="selectStarsPack(50,10000)"><div class="star">⭐</div><strong>50 Stars</strong><div class="pprice">10 000 UZS</div><span class="ton">0.57 TON</span></button>
+        <button class="pack" onclick="selectStarsPack(100,19500)"><span class="tag">POPULAR</span><div class="star">⭐</div><strong>100 Stars</strong><div class="pprice">19 500 UZS</div><span class="ton">1.14 TON</span></button>
+        <button class="pack" onclick="selectStarsPack(200,39500)"><div class="star">⭐</div><strong>200 Stars</strong><div class="pprice">39 500 UZS</div><span class="ton">2.30 TON</span></button>
+        <button class="pack" onclick="selectStarsPack(300,59500)"><div class="star">⭐</div><strong>300 Stars</strong><div class="pprice">59 500 UZS</div><span class="ton">3.46 TON</span></button>
+        <button class="pack" onclick="selectStarsPack(500,99000)"><span class="tag">HOT</span><div class="star">⭐</div><strong>500 Stars</strong><div class="pprice">99 000 UZS</div><span class="ton">5.76 TON</span></button>
+        <button class="pack" onclick="selectStarsPack(1000,197500)"><span class="tag">BEST</span><div class="star">⭐</div><strong>1000 Stars</strong><div class="pprice">197 500 UZS</div><span class="ton">11.52 TON</span></button>
+      </div>
     </div>
-    <div class="notice">🔒 Stars va Premium xaridi faqat mavjud balansdan amalga oshadi. So‘rov berilganda summa balansdan darhol yechiladi.</div>
+
+    <div id="shopPaneGifts" class="shop-tabpane">
+      <div class="section-title" style="margin-top:10px">TELEGRAM SOVG'ALAR</div>
+      <div class="pack-grid">
+        <button class="pack" onclick="selectGift('💖 Pushti yurak', 3000)"><div class="star">💖</div><strong>Pushti yurak</strong><div class="pprice">3 000 UZS</div><span class="ton">15 Stars</span></button>
+        <button class="pack" onclick="selectGift('🧸 Ayiqcha', 3000)"><span class="tag">TOP</span><div class="star">🧸</div><strong>Ayiqcha</strong><div class="pprice">3 000 UZS</div><span class="ton">15 Stars</span></button>
+        <button class="pack" onclick="selectGift('🎁 Sovg\'a qutisi', 5000)"><div class="star">🎁</div><strong>Sovg'a qutisi</strong><div class="pprice">5 000 UZS</div><span class="ton">25 Stars</span></button>
+        <button class="pack" onclick="selectGift('🌹 Atirgul', 5000)"><div class="star">🌹</div><strong>Atirgul</strong><div class="pprice">5 000 UZS</div><span class="ton">25 Stars</span></button>
+        <button class="pack" onclick="selectGift('🎂 Tort', 10000)"><div class="star">🎂</div><strong>Tort</strong><div class="pprice">10 000 UZS</div><span class="ton">50 Stars</span></button>
+        <button class="pack" onclick="selectGift('💐 Gul tutami', 10000)"><div class="star">💐</div><strong>Gul tutami</strong><div class="pprice">10 000 UZS</div><span class="ton">50 Stars</span></button>
+        <button class="pack" onclick="selectGift('🚀 Raketa', 10000)"><div class="star">🚀</div><strong>Raketa</strong><div class="pprice">10 000 UZS</div><span class="ton">50 Stars</span></button>
+        <button class="pack" onclick="selectGift('🏆 Kubok', 20000)"><div class="star">🏆</div><strong>Kubok</strong><div class="pprice">20 000 UZS</div><span class="ton">100 Stars</span></button>
+        <button class="pack" onclick="selectGift('💍 Uzuk', 20000)"><div class="star">💍</div><strong>Uzuk</strong><div class="pprice">20 000 UZS</div><span class="ton">100 Stars</span></button>
+      </div>
+    </div>
+
+    <div id="shopPanePremiums" class="shop-tabpane">
+      <div class="section-title" style="margin-top:10px">TELEGRAM PREMIUM</div>
+      <div class="premium-list">
+        <div class="premium"><div class="icon">👑</div><div class="premium-info"><strong>3 oy Premium</strong><small>9.2 TON · 159 000 UZS</small></div><button onclick="selectPremium('3m')">159K</button></div>
+        <div class="premium"><div class="icon">👑</div><div class="premium-info"><strong>6 oy Premium</strong><small>12.3 TON · 212 000 UZS</small></div><button onclick="selectPremium('6m')">212K</button></div>
+        <div class="premium"><div class="icon">👑</div><div class="premium-info"><strong>1 yil Premium</strong><small>22.24 TON · 384 000 UZS</small></div><button onclick="selectPremium('1y')">384K</button></div>
+      </div>
+    </div>
+
+    <div id="shopPaneTop" class="shop-tabpane">
+      <div class="section-title" style="margin-top:10px">TOP 20 ENG KO'P BALAND TOPGANLAR</div>
+      <div id="leaderList" class="leader-list"></div>
+    </div>
+
+    <div class="notice">🔒 Stars va xaridlar mavjud balansdan amalga oshadi. So‘rov berilganda summa balansdan darhol yechiladi.</div>
   </div>
 
   <div id="recipientStep" class="stars-step">
@@ -219,14 +292,30 @@ button{cursor:pointer}
       <button class="back" onclick="backShop()">←</button>
       <div class="iconbox">⭐</div>
       <div class="label">RECIPIENT</div>
-      <h2 id="recipientTitle">Stars kimga yuboriladi?</h2>
+      <h2 id="recipientTitle">Kimga yuboriladi?</h2>
       <p class="step-desc">Telegram username'ni aniq kiriting.</p>
       <div class="selected">
         <div class="icon">⭐</div>
         <div><strong id="selectedItem">50 Stars</strong><small id="selectedPrice">10 000 UZS</small></div>
       </div>
+      
+      <!-- FAQAT GIFT UCHUN CHIQADIGAN BO'LIM -->
+      <div id="giftOnlySection" style="display: none;">
+        <label class="label-input">YUBORISH REJIMI</label>
+        <div class="modes-grid" style="grid-template-columns: 1fr 1fr;">
+          <div id="modeAnon" class="mode-btn active" onclick="setSendMode('anonim')">👻 Anonim</div>
+          <div id="modeCEO" class="mode-btn" onclick="setSendMode('ceo')">👑 CEO nomidan</div>
+        </div>
+
+        <label class="label-input">IZOH YOZISH (Ixtiyoriy)</label>
+        <div class="inputbox" style="padding: 0 14px;">
+          <input id="giftComment" placeholder="Izoh yozib qoldiring..." maxlength="100" style="padding: 0; background: transparent; border: none; outline: none; color: #fff; width: 100%;">
+        </div>
+      </div>
+
       <label class="label-input">QABUL QILUVCHI USERNAME</label>
       <div class="inputbox"><span>@</span><input id="recipientInput" placeholder="username" maxlength="32"></div>
+
       <div class="warning"><span>⚠️</span><div><strong>Diqqat</strong><p>So‘rov aynan shu username'ga yuboriladi. Username'ni yuborishdan oldin tekshiring.</p></div></div>
       <button class="primary" onclick="confirmRecipient()">Sotib olishni davom ettirish →</button>
     </div>
@@ -241,7 +330,7 @@ button{cursor:pointer}
       <p class="step-desc">Summani kiriting, karta orqali to‘lang va chekni yuklang.</p>
       <div class="amount-box"><small>SUMMA (UZS)</small><input id="depositAmount" class="amount-input" inputmode="numeric" type="number" min="1000" max="5000000" placeholder="50 000"></div>
       <div class="card">
-        <div class="card-head"><span>KARTA RAQAMI</span><span class="copy" onclick="copyCard()">COPY</span></div>
+        <div class="card-head"><span>KARTA RAqAMI</span><span class="copy" onclick="copyCard()">COPY</span></div>
         <div class="card-number">5614 6814 2795 1664</div>
         <div class="card-foot"><span>QABUL QILUVCHI</span><b>U.F</b></div>
       </div>
@@ -265,9 +354,14 @@ button{cursor:pointer}
         <div class="summary"><span>MAHSULOT</span><strong id="payItem">50 Stars</strong></div>
         <div class="summary"><span>NARX</span><strong id="payPrice">10 000 UZS</strong></div>
       </div>
-      <div class="selected">
+
+      <div class="selected" style="margin-top:15px;">
         <div class="icon">🎯</div>
-        <div><strong id="payRecipient">@username</strong><small>Stars/Premium qabul qiluvchi</small></div>
+        <div>
+          <strong id="payRecipient">@username</strong>
+          <small id="payModeDisplay" style="color: #4cd137; font-weight: bold; margin-top: 2px; display: none;">Rejim: Anonim</small>
+          <small id="payCommentDisplay" style="display: none;">Izoh: Yo'q</small>
+        </div>
       </div>
       <div class="notice">Balans yetarli bo‘lmasa so‘rov yaratilmaydi. So‘rov yaratilganda pul balansdan faqat bir marta yechiladi.</div>
       <button id="buyBtn" class="primary" onclick="submitBalancePurchase()">SO‘ROV YUBORISH</button>
@@ -319,9 +413,12 @@ let coins=Number(localStorage.getItem('m_coins')||0),
 let selectedKind='stars',
     selectedStars=0,
     selectedPrice=0,
+    selectedGiftName='',
     selectedPremiumKey='',
     selectedRecipient='',
-    selectedReceiptFile=null;
+    selectedReceiptFile=null,
+    giftComment='',
+    sendMode='anonim';
 
 function hideAll(){document.querySelectorAll('.screen').forEach(s=>s.style.display='none')}
 function goHome(){hideAll();document.getElementById('home').style.display='flex'}
@@ -334,6 +431,7 @@ function openStarsShop(){
   const shop = document.getElementById('starsShop');
   shop.style.display='flex';
   showStarStep('starsHome');
+  loadLeaderboard();
 }
 
 function showStarStep(id){
@@ -341,7 +439,83 @@ function showStarStep(id){
   document.getElementById(id).classList.add('active');
 }
 
-// REAL-TIME BALANS TINGLOVCHISI
+function switchShopSubtab(tabName){
+  document.getElementById('subtabBtnStars').classList.remove('active');
+  document.getElementById('subtabBtnGifts').classList.remove('active');
+  document.getElementById('subtabBtnPremiums').classList.remove('active');
+  document.getElementById('subtabBtnTop').classList.remove('active');
+
+  document.getElementById('shopPaneStars').classList.remove('active');
+  document.getElementById('shopPaneGifts').classList.remove('active');
+  document.getElementById('shopPanePremiums').classList.remove('active');
+  document.getElementById('shopPaneTop').classList.remove('active');
+
+  if(tabName === 'stars'){
+    document.getElementById('subtabBtnStars').classList.add('active');
+    document.getElementById('shopPaneStars').classList.add('active');
+  } else if(tabName === 'gifts'){
+    document.getElementById('subtabBtnGifts').classList.add('active');
+    document.getElementById('shopPaneGifts').classList.add('active');
+  } else if(tabName === 'premiums'){
+    document.getElementById('subtabBtnPremiums').classList.add('active');
+    document.getElementById('shopPanePremiums').classList.add('active');
+  } else if(tabName === 'top'){
+    document.getElementById('subtabBtnTop').classList.add('active');
+    document.getElementById('shopPaneTop').classList.add('active');
+    loadLeaderboard();
+  }
+}
+
+async function loadLeaderboard(){
+  const listEl = document.getElementById('leaderList');
+  listEl.innerHTML = '<div style="text-align:center;color:#777;padding:20px;">Yuklanmoqda...</div>';
+  
+  try {
+    const snapshot = await db.collection('users').orderBy('balance', 'desc').limit(20).get();
+    if(snapshot.empty){
+      listEl.innerHTML = '<div style="text-align:center;color:#777;padding:20px;">Hozircha foydalanuvchilar yo‘q.</div>';
+      return;
+    }
+
+    let html = '';
+    let rank = 1;
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const uname = data.username ? '@' + data.username : 'Foydalanuvchi ' + doc.id.slice(0,5);
+      const bal = Number(data.balance || 0).toLocaleString('uz-UZ');
+      const firstLetter = (data.username ? data.username.charAt(0) : 'U').toUpperCase();
+      
+      let frameClass = '';
+      if(rank === 1) frameClass = 'rank-1-frame';
+      else if(rank === 2) frameClass = 'rank-2-frame';
+      else if(rank === 3) frameClass = 'rank-3-frame';
+      else if(rank === 4) frameClass = 'rank-4-frame';
+      else if(rank === 5) frameClass = 'rank-5-frame';
+
+      html += `
+        <div class="leader-item">
+          <div class="leader-left">
+            <div class="leader-avatar-wrap ${frameClass}">
+              <div class="leader-avatar">${firstLetter}</div>
+              <div class="leader-rank-badge">${rank}</div>
+            </div>
+            <div>
+              <div class="leader-name">${uname}</div>
+              <div class="leader-sub">ID: ${doc.id}</div>
+            </div>
+          </div>
+          <div class="leader-amount">${bal} UZS</div>
+        </div>
+      `;
+      rank++;
+    });
+    listEl.innerHTML = html;
+  } catch(e) {
+    console.error(e);
+    listEl.innerHTML = '<div style="text-align:center;color:#ff5252;padding:20px;">Maʼlumotlarni yuklashda xatolik yuz berdi.</div>';
+  }
+}
+
 let balanceUnsubscribe = null;
 function listenBalance(){
   let currentUser = window.Telegram?.WebApp?.initDataUnsafe?.user || tgUser || {};
@@ -393,20 +567,45 @@ function normalizeUsername(v){
   return /^[A-Za-z0-9_]{5,32}$/.test(raw)?'@'+raw:'';
 }
 
+function setSendMode(mode){
+  sendMode = mode;
+  document.getElementById('modeAnon').classList.remove('active');
+  document.getElementById('modeCEO').classList.remove('active');
+
+  if(mode === 'anonim') document.getElementById('modeAnon').classList.add('active');
+  else if(mode === 'ceo') document.getElementById('modeCEO').classList.add('active');
+}
+
 function selectStarsPack(stars,price){
-  selectedKind='stars';selectedStars=stars;selectedPrice=price;selectedPremiumKey='';selectedRecipient='';
+  selectedKind='stars';selectedStars=stars;selectedPrice=price;selectedGiftName='';selectedPremiumKey='';selectedRecipient='';
+  document.getElementById('giftOnlySection').style.display='none'; // Stars uchun yashiriladi
   document.getElementById('selectedItem').textContent=`${stars} Stars`;
   document.getElementById('selectedPrice').textContent=`${price.toLocaleString('uz-UZ')} UZS`;
   document.getElementById('recipientTitle').textContent='Stars kimga yuboriladi?';
+  document.getElementById('recipientInput').value='';
+  showStarStep('recipientStep');
+}
+
+function selectGift(giftName, price) {
+  selectedKind='gift';selectedGiftName=giftName;selectedStars=0;selectedPrice=price;selectedPremiumKey='';selectedRecipient='';
+  setSendMode('anonim');
+  document.getElementById('giftOnlySection').style.display='block'; // Gift uchun chiqariladi
+  document.getElementById('selectedItem').textContent=giftName;
+  document.getElementById('selectedPrice').textContent=`${price.toLocaleString('uz-UZ')} UZS`;
+  document.getElementById('recipientTitle').textContent='Sovg\'a kimga yuboriladi?';
+  document.getElementById('recipientInput').value='';
+  document.getElementById('giftComment').value='';
   showStarStep('recipientStep');
 }
 
 function selectPremium(key){
   const m={"3m":['3 oy Premium',159000],"6m":['6 oy Premium',212000],"1y":['1 yil Premium',384000]}[key];
-  selectedKind='premium';selectedPremiumKey=key;selectedStars=0;selectedPrice=m[1];selectedRecipient='';
+  selectedKind='premium';selectedPremiumKey=key;selectedStars=0;selectedPrice=m[1];selectedGiftName='';selectedRecipient='';
+  document.getElementById('giftOnlySection').style.display='none'; // Premium uchun yashiriladi
   document.getElementById('selectedItem').textContent=m[0];
   document.getElementById('selectedPrice').textContent=`${m[1].toLocaleString('uz-UZ')} UZS`;
   document.getElementById('recipientTitle').textContent='Premium kimga yuboriladi?';
+  document.getElementById('recipientInput').value='';
   showStarStep('recipientStep');
 }
 
@@ -414,9 +613,36 @@ function confirmRecipient(){
   const u=normalizeUsername(document.getElementById('recipientInput').value);
   if(!u){toast('Username noto‘g‘ri yoki kiritilmagan.');return}
   selectedRecipient=u;
-  document.getElementById('payItem').textContent=selectedKind==='stars'?`${selectedStars} Stars`:({"3m":'3 oy Premium',"6m":'6 oy Premium',"1y":'1 yil Premium'}[selectedPremiumKey]);
+  
+  if(selectedKind === 'gift'){
+    giftComment = document.getElementById('giftComment').value.trim();
+  } else {
+    giftComment = '';
+  }
+  
+  let itemName = selectedKind==='stars'?`${selectedStars} Stars`:
+               selectedKind==='gift'?selectedGiftName:
+               {"3m":'3 oy Premium',"6m":'6 oy Premium',"1y":'1 yil Premium'}[selectedPremiumKey];
+
+  document.getElementById('payItem').textContent=itemName;
   document.getElementById('payPrice').textContent=`${selectedPrice.toLocaleString('uz-UZ')} UZS`;
   document.getElementById('payRecipient').textContent=u;
+
+  const modeDisp = document.getElementById('payModeDisplay');
+  const commDisp = document.getElementById('payCommentDisplay');
+
+  if(selectedKind === 'gift'){
+    let modeText = sendMode === 'anonim' ? '👻 Anonim tarzda' : '👑 CEO nomidan';
+    modeDisp.textContent = `Rejim: ${modeText}`;
+    modeDisp.style.display = 'block';
+    
+    commDisp.textContent = giftComment ? `Izoh: ${giftComment}` : "Izoh: Yo'q";
+    commDisp.style.display = 'block';
+  } else {
+    modeDisp.style.display = 'none';
+    commDisp.style.display = 'none';
+  }
+
   showStarStep('payStep');
 }
 
@@ -534,8 +760,18 @@ async function submitBalancePurchase(){
       transaction.set(userRef, { balance: newBalance, username: currentUser.username || '' }, { merge: true });
     });
 
-    const itemName = selectedKind === 'stars' ? `${selectedStars} Stars` : {"3m":'3 oy Premium',"6m":'6 oy Premium',"1y":'1 yil Premium'}[selectedPremiumKey];
-    const message = `⭐ YANGI SO‘ROV (STARS/PREMIUM)!\n\n👤 Xaridor: @${currentUser.username || 'Nomaʼlum'} (ID: ${currentUserId})\n📦 Mahsulot: ${itemName}\n🎯 Qabul qiluvchi: ${selectedRecipient}\n💰 Narxi: ${selectedPrice.toLocaleString('uz-UZ')} UZS`;
+    const itemName = selectedKind === 'stars' ? `${selectedStars} Stars` : 
+                     selectedKind === 'gift' ? selectedGiftName : 
+                     {"3m":'3 oy Premium',"6m":'6 oy Premium',"1y":'1 yil Premium'}[selectedPremiumKey];
+
+    let message = `⭐ YANGI SO‘ROV!\n\n👤 Xaridor: @${currentUser.username || 'Nomaʼlum'} (ID: ${currentUserId})\n📦 Mahsulot: ${itemName}\n🎯 Qabul qiluvchi: ${selectedRecipient}\n`;
+    
+    if(selectedKind === 'gift'){
+      let modeTitle = sendMode === 'anonim' ? '👻 Anonim' : '👑 CEO nomidan';
+      message += `🎯 Rejim: ${modeTitle}\n💬 Izoh: ${giftComment || 'Yo\'q'}\n`;
+    }
+    
+    message += `💰 Narxi: ${selectedPrice.toLocaleString('uz-UZ')} UZS`;
 
     const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: 'POST',

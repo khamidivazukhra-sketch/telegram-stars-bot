@@ -29,15 +29,14 @@ async function editMessageCaption(chatId, messageId, caption) {
 }
 
 export async function handleUpdate(reqBody, res) {
+  res.status(200).send('OK');
+
   try {
     if (reqBody.callback_query) {
       const query = reqBody.callback_query;
       const dataStr = query.data;
       const chatId = query.message.chat.id;
       const messageId = query.message.message_id;
-
-      // 1. Tugma bosilishi bilan aylanishini to'xtatish uchun darhol javob yuboramiz
-      await answerCallbackQuery(query.id, "Bajarilmoqda...");
 
       if (dataStr.startsWith('approve_')) {
         const parts = dataStr.split('_');
@@ -51,19 +50,23 @@ export async function handleUpdate(reqBody, res) {
 
         if (isNaN(amount) || amount < 1000 || amount > 10000000) {
           await answerCallbackQuery(query.id, `Xatolik: Noto'g'ri summa!`, true);
-          return res.status(200).send('OK');
+          return;
         }
 
         const userRef = db.collection('users').doc(String(userId));
         const doc = await userRef.get();
 
         let currentBalance = 0;
+        let currentTurnover = 0;
         if (doc.exists) {
           currentBalance = Number(doc.data().balance || 0);
+          currentTurnover = Number(doc.data().turnover || 0);
         }
 
+        // Balansga qo'shamiz va Turnover (abarot) ga ham qo'shamiz
         await userRef.set({ 
-          balance: currentBalance + amount 
+          balance: currentBalance + amount,
+          turnover: currentTurnover + amount
         }, { merge: true });
         
         await answerCallbackQuery(query.id, `Balansga ${amount.toLocaleString('uz-UZ')} UZS qo'shildi!`, true);
@@ -75,9 +78,7 @@ export async function handleUpdate(reqBody, res) {
         await editMessageCaption(chatId, messageId, `❌ TOLOV RAD ETILDI!\n\nID: ${userId}`);
       }
     }
-    res.status(200).send('OK');
   } catch (err) {
     console.error('Webhook xatosi:', err);
-    res.status(500).send('Error');
   }
 }

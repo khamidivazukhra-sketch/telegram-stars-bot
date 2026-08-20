@@ -2,11 +2,9 @@ const admin = require("firebase-admin");
 const express = require("express");
 const cors = require("cors");
 
-// Firebase Admin SDK'ni xavfsiz ishga tushirish
 if (!admin.apps.length) {
   let credential;
 
-  // 1. Render Environment Variables tekshiruvi
   if (process.env.FIREBASE_CONFIG_JSON) {
     try {
       const serviceAccount = JSON.parse(process.env.FIREBASE_CONFIG_JSON);
@@ -16,7 +14,6 @@ if (!admin.apps.length) {
     }
   }
 
-  // 2. Aks holda local/secret fayldan o'qish
   if (!credential) {
     try {
       const serviceAccount = require("./serviceAccountKey.json");
@@ -48,6 +45,31 @@ app.post("/webhook", async (req, res) => {
 
 app.get("/health", (req, res) => {
   res.status(200).send("Bot API muvaffaqiyatli ishlamoqda!");
+});
+
+// 📌 Top 25 turnover (abarot) bo'yicha foydalanuvchilar reytingi
+app.get("/api/top-users", async (req, res) => {
+  try {
+    const snapshot = await admin.firestore().collection('users')
+      .orderBy('turnover', 'desc')
+      .limit(25)
+      .get();
+
+    const topUsers = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      topUsers.push({
+        userId: doc.id,
+        username: data.username || 'Foydalanuvchi',
+        turnover: data.turnover || 0
+      });
+    });
+
+    res.status(200).json({ success: true, topUsers });
+  } catch (error) {
+    console.error("Top users xatosi:", error);
+    res.status(500).json({ success: false, error: "Server xatosi" });
+  }
 });
 
 const PORT = process.env.PORT || 3000;

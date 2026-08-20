@@ -1,123 +1,96 @@
-const { Telegraf } = require("telegraf");
-const admin = require("firebase-admin");
+import admin from 'firebase-admin';
+import fetch from 'node-fetch';
+import fs from 'fs';
 
-// Render Environment variables'dan bot tokenni olish
-const bot = new Telegraf(process.env.BOT_TOKEN);
+const serviceAccount = JSON.parse(fs.readFileSync('./serviceAccountKey.json', 'utf8'));
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
 const db = admin.firestore();
 
-// 1. /start buyrug'i
-bot.start(async (ctx) => {
-  const userId = String(ctx.from.id);
-  const userRef = db.collection("users").doc(userId);
-  const doc = await userRef.get();
+const BOT_TOKEN = '8727235785:AAEodW-Pfqo3082mrSa4fK73_wp8o-Q3sUg';
+console.log("🚀 Bot muvaffaqiyatli ishga tushdi!");
 
-  if (!doc.exists) {
-    await userRef.set({
-      id: userId,
-      username: ctx.from.username || "Mavjud emas",
-      first_name: ctx.from.first_name || "",
-      balance: 0,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
-    });
-  }
-
-  await ctx.reply(`Xush kelibsiz, ${ctx.from.first_name}! Balansingizni to'ldirish uchun chek yuboring.`);
-});
-
-// 2. Chek (Foto) kelganda ishlovchi qism
-bot.on("photo", async (ctx) => {
-  const userId = String(ctx.from.id);
-  const photoId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
-  const caption = ctx.message.caption || "0";
-
-  // Captionsiz yuborilgan bo'lsa summani ajratish
-  const amount = parseInt(caption.replace(/\D/g, "")) || 0;
-
-  if (amount <= 0) {
-    return ctx.reply("❌ Iltimos, rasm ostiga (caption) o'tkazgan summangizni raqamda yozib yuboring! (Masalan: 50000)");
-  }
-
-  const adminId = process.env.ADMIN_ID;
-  if (!adminId) {
-    return ctx.reply("❌ Tizim xatoligi: Admin ID sozlanmagan.");
-  }
-
-  // Adminga xabar va inline tugmalarni yuborish
-  await ctx.telegram.sendPhoto(adminId, photoId, {
-    caption: `📥 **YANGI TO'LOV CHEKI!**\n\n👤 Foydalanuvchi: @${ctx.from.username || "yashirin"} (ID: \`${userId}\`)\n💰 Summa: **${amount.toLocaleString()} UZS**`,
-    parse_mode: "Markdown",
-    reply_markup: {
-      inline_keyboard: [
-        [
-          { text: "✅ Balansni tasdiqlash", callback_data: `approve_${userId}_${amount}` },
-          { text: "❌ Rad etish", callback_data: `reject_${userId}` }
-        ]
-      ]
-    }
-  });
-
-  await ctx.reply("✅ Chekingiz adminga yuborildi. Tekshiruvdan so'ng balansingizga pul qo'shiladi.");
-});
-
-// 3. Admin "✅ Balansni tasdiqlash" tugmasini bosganda
-bot.action(/^approve_(\d+)_(\d+)$/, async (ctx) => {
-  const userId = ctx.match[1];
-  const amount = parseInt(ctx.match[2]);
-
+async function answerCallbackQuery(callbackQueryId, text, showAlert = false) {
   try {
-    const userRef = db.collection("users").doc(userId);
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callback_query_id: callbackQueryId, text, show_alert: showAlert })
+    });
+  } catch (e) {
+    console.error("Answer error:", e);
+  }
+}
 
-    // Firestore tranzaksiyasi orqali balansni xavfsiz oshirish
-    await db.runTransaction(async (transaction) => {
-      const userDoc = await transaction.get(userRef);
-      if (!userDoc.exists) {
-        transaction.set(userRef, { balance: amount });
-      } else {
-        const currentBalance = userDoc.data().balance || 0;
-        transaction.update(userRef, { balance: currentBalance + amount });
+async function editMessageCaption(chatId, messageId, caption) {
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageCaption`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, message_id: messageId, caption })
+    });
+  } catch (e) {
+    console.error("Edit error:", e);
+  }
+}
+
+let offset = 0;
+async function poll() {
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${offset}&timeout=30`);
+    const data = await res.json();
+
+    if (data.ok && data.result) {
+      for (const update of data.result) {
+        offset = update.update_id + 1;
+
+        if (update.callback_query) {
+          const query = update.callback_query;
+          const dataStr = query.data;
+          const chatId = query.message.chat.id;
+          const messageId = query.message.message_id;
+
+          if (dataStr.startsWith('approve_')) {
+            const parts = dataStr.split('_');
+            const userId = parts[1];
+            const amount = Number(parts[2]);
+
+            try {
+              // Foydalanuvchini bazadan qidirib topamiz yoki yangi yaratamiz
+              const userRef = db.collection('users').doc(userId);
+              const doc = await userRef.get();
+
+              let currentBalance = 0;
+              if (doc.exists) {
+                currentBalance = Number(doc.data().balance || 0);
+              }
+
+              // Balansni yangilash
+              await userRef.set({ 
+                balance: currentBalance + amount 
+              }, { merge: true });
+              
+              await answerCallbackQuery(query.id, `Balansga ${amount} UZS qo'shildi!`, true);
+              await editMessageCaption(chatId, messageId, `✅ TOLOV TASDIQLANDI!\n\nID: ${userId}\nSumma: ${amount} UZS`);
+            } catch (e) {
+              console.error("DB error:", e);
+              await answerCallbackQuery(query.id, 'Bazaga yozishda xatolik!');
+            }
+          } else if (dataStr.startsWith('reject_')) {
+            const userId = dataStr.split('_')[1];
+            await answerCallbackQuery(query.id, 'Rad etildi');
+            await editMessageCaption(chatId, messageId, `❌ TOLOV RAD ETILDI!\n\nID: ${userId}`);
+          }
+        }
       }
-    });
-
-    // Telegram uchun qisqa va aniq javob (xatolik bermaydi)
-    await ctx.answerCbQuery("✅ Balans muvaffaqiyatli to'ldirildi!");
-
-    // Admin xabarini yangilash
-    await ctx.editMessageCaption(
-      `${ctx.callbackQuery.message.caption}\n\n✅ **STATUS:** Tasdiqlandi (+${amount.toLocaleString()} UZS)`,
-      { parse_mode: "Markdown" }
-    );
-
-    // Foydalanuvchiga xabar yuborish
-    await bot.telegram.sendMessage(
-      userId,
-      `🎉 **Xushxabar!** To'lovingiz tasdiqlandi.\n💰 Balansingizga **${amount.toLocaleString()} UZS** qo'shildi.`
-    );
-  } catch (error) {
-    console.error("Tasdiqlashda xatolik:", error);
-    // Qisqa xabar berish orqali MESSAGE_TOO_LONG xatosining oldi olinadi
-    await ctx.answerCbQuery("❌ Baza xatosi! Admin panelini tekshiring.", { show_alert: true });
+    }
+  } catch (err) {
+    console.error('Polling xatosi:', err);
   }
-});
+  setTimeout(poll, 1000);
+}
 
-// 4. Admin "❌ Rad etish" tugmasini bosganda
-bot.action(/^reject_(\d+)$/, async (ctx) => {
-  const userId = ctx.match[1];
-
-  try {
-    await ctx.answerCbQuery("❌ To'lov rad etildi");
-    await ctx.editMessageCaption(
-      `${ctx.callbackQuery.message.caption}\n\n❌ **STATUS:** Rad etildi`,
-      { parse_mode: "Markdown" }
-    );
-
-    await bot.telegram.sendMessage(
-      userId,
-      "❌ Kechirasiz, siz yuborgan to'lov cheki rad etildi."
-    );
-  } catch (error) {
-    console.error("Rad etishda xatolik:", error);
-    await ctx.answerCbQuery("❌ Xatolik yuz berdi", { show_alert: true });
-  }
-});
-
-module.exports = bot;
+poll();

@@ -1,178 +1,122 @@
-const { Telegraf, Markup } = require("telegraf");
+const { Telegraf } = require("telegraf");
 const admin = require("firebase-admin");
 
-// Firebase initiatsiyasi (index.js da chaqirilmagan bo'lsa)
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
+// Render Environment variables'dan bot tokenni olish
+const bot = new Telegraf(process.env.BOT_TOKEN);
 const db = admin.firestore();
 
-// Bot tokeni va Admin ID sini kiriting
-const BOT_TOKEN = process.env.BOT_TOKEN || "YOUR_TELEGRAM_BOT_TOKEN";
-const ADMIN_ID = process.env.ADMIN_ID || "123456789"; // O'zingizning Telegram ID ingiz
-
-const bot = new Telegraf(BOT_TOKEN);
-
-// 1. /start buyrug'i - Foydalanuvchini bazaga ro'yxatga olish
+// 1. /start buyrug'i
 bot.start(async (ctx) => {
-  const user = ctx.from;
-  const userRef = db.collection("users").doc(user.id.toString());
+  const userId = String(ctx.from.id);
+  const userRef = db.collection("users").doc(userId);
+  const doc = await userRef.get();
 
-  try {
-    const doc = await userRef.get();
-    if (!doc.exists) {
-      await userRef.set({
-        telegramId: user.id,
-        firstName: user.first_name || "",
-        username: user.username || "",
-        balance: 0,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+  if (!doc.exists) {
+    await userRef.set({
+      id: userId,
+      username: ctx.from.username || "Mavjud emas",
+      first_name: ctx.from.first_name || "",
+      balance: 0,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+  }
+
+  await ctx.reply(`Xush kelibsiz, ${ctx.from.first_name}! Balansingizni to'ldirish uchun chek yuboring.`);
+});
+
+// 2. Chek (Foto) kelganda ishlovchi qism
+bot.on("photo", async (ctx) => {
+  const userId = String(ctx.from.id);
+  const photoId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
+  const caption = ctx.message.caption || "0";
+
+  // Captionsiz yuborilgan bo'lsa summani ajratish
+  const amount = parseInt(caption.replace(/\D/g, "")) || 0;
+
+  if (amount <= 0) {
+    return ctx.reply("❌ Iltimos, rasm ostiga (caption) o'tkazgan summangizni raqamda yozib yuboring! (Masalan: 50000)");
+  }
+
+  const adminId = process.env.ADMIN_ID;
+  if (!adminId) {
+    return ctx.reply("❌ Tizim xatoligi: Admin ID sozlanmagan.");
+  }
+
+  // Adminga xabar va inline tugmalarni yuborish
+  await ctx.telegram.sendPhoto(adminId, photoId, {
+    caption: `📥 **YANGI TO'LOV CHEKI!**\n\n👤 Foydalanuvchi: @${ctx.from.username || "yashirin"} (ID: \`${userId}\`)\n💰 Summa: **${amount.toLocaleString()} UZS**`,
+    parse_mode: "Markdown",
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: "✅ Balansni tasdiqlash", callback_data: `approve_${userId}_${amount}` },
+          { text: "❌ Rad etish", callback_data: `reject_${userId}` }
+        ]
+      ]
     }
-    await ctx.reply(
-      `Xush kelibsiz, ${user.first_name}!\nBalansni to'ldirish uchun /deposit buyrug'ini yuboring.`
-    );
-  } catch (error) {
-    console.error("Start xatosi:", error);
-  }
+  });
+
+  await ctx.reply("✅ Chekingiz adminga yuborildi. Tekshiruvdan so'ng balansingizga pul qo'shiladi.");
 });
 
-// 2. /deposit buyrug'i - Depozit so'rovini yaratish
-bot.command("deposit", async (ctx) => {
-  const userId = ctx.from.id.toString();
-  const amount = 50000; // Misol uchun 50,000 so'm
+// 3. Admin "✅ Balansni tasdiqlash" tugmasini bosganda
+bot.action(/^approve_(\d+)_(\d+)$/, async (ctx) => {
+  const userId = ctx.match[1];
+  const amount = parseInt(ctx.match[2]);
 
   try {
-    // Bazada yangi depozit so'rovi yaratish
-    const depositRef = await db.collection("deposits").add({
-      userId: userId,
-      userName: ctx.from.first_name,
-      amount: amount,
-      status: "pending",
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    const userRef = db.collection("users").doc(userId);
 
-    await ctx.reply("Depozit so'rovingiz adminga yuborildi. Kuting...");
-
-    // Adminga tugmalar bilan xabar yuborish
-    await ctx.telegram.sendMessage(
-      ADMIN_ID,
-      `📥 **Yangi depozit so'rovi!**\n\n` +
-        `👤 Foydalanuvchi: ${ctx.from.first_name} (@${ctx.from.username || "yo'q"})\n` +
-        `🆔 ID: \`${userId}\`\n` +
-        `💰 Summa: **${amount.toLocaleString()} so'm**\n` +
-        `📄 So'rov ID: \`${depositRef.id}\``,
-      {
-        parse_mode: "Markdown",
-        ...Markup.inlineKeyboard([
-          [
-            Markup.button.callback("✅ Tasdiqlash", `approve_${depositRef.id}`),
-            Markup.button.callback("❌ Rad etish", `reject_${depositRef.id}`),
-          ],
-        ]),
-      }
-    );
-  } catch (error) {
-    console.error("Deposit xatosi:", error);
-    await ctx.reply("So'rov yaratishda xatolik yuz berdi.");
-  }
-});
-
-// 3. Admin "✅ Tasdiqlash" tugmasini bosganda
-bot.action(/^approve_(.+)$/, async (ctx) => {
-  const depositId = ctx.match[1];
-
-  try {
-    // Telegram spinnerini to'xtatish
-    await ctx.answerCbQuery("Ishlanmoqda...");
-
-    const depositRef = db.collection("deposits").doc(depositId);
-
-    // Firestore Tranzaksiyasi: balans va statusni bir vaqtda xavfsiz yangilash
+    // Firestore tranzaksiyasi orqali balansni xavfsiz oshirish
     await db.runTransaction(async (transaction) => {
-      const depositDoc = await transaction.get(depositRef);
-
-      if (!depositDoc.exists) {
-        throw new Error("So'rov topilmadi!");
+      const userDoc = await transaction.get(userRef);
+      if (!userDoc.exists) {
+        transaction.set(userRef, { balance: amount });
+      } else {
+        const currentBalance = userDoc.data().balance || 0;
+        transaction.update(userRef, { balance: currentBalance + amount });
       }
-
-      const depositData = depositDoc.data();
-
-      if (depositData.status !== "pending") {
-        throw new Error("So'rov allaqachon ko'rib chiqilgan!");
-      }
-
-      const userRef = db.collection("users").doc(depositData.userId);
-
-      // Foydalanuvchi balansini oshirish
-      transaction.update(userRef, {
-        balance: admin.firestore.FieldValue.increment(Number(depositData.amount)),
-      });
-
-      // Depozit statusini yangilash
-      transaction.update(depositRef, {
-        status: "approved",
-        approvedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-
-      // Foydalanuvchiga bildirishnoma yuborish
-      await ctx.telegram.sendMessage(
-        depositData.userId,
-        `🎉 **Balansingiz to'ldirildi!**\n\n💰 Qo'shildi: **${depositData.amount.toLocaleString()} so'm**`,
-        { parse_mode: "Markdown" }
-      );
     });
 
-    // Admin chatidagi xabarni va tugmalarni o'zgartirish
-    await ctx.editMessageText(
-      `${ctx.callbackQuery.message.text}\n\n✅ **HOLAT: Tasdiqlandi**`,
+    // Telegram uchun qisqa va aniq javob (xatolik bermaydi)
+    await ctx.answerCbQuery("✅ Balans muvaffaqiyatli to'ldirildi!");
+
+    // Admin xabarini yangilash
+    await ctx.editMessageCaption(
+      `${ctx.callbackQuery.message.caption}\n\n✅ **STATUS:** Tasdiqlandi (+${amount.toLocaleString()} UZS)`,
       { parse_mode: "Markdown" }
     );
+
+    // Foydalanuvchiga xabar yuborish
+    await bot.telegram.sendMessage(
+      userId,
+      `🎉 **Xushxabar!** To'lovingiz tasdiqlandi.\n💰 Balansingizga **${amount.toLocaleString()} UZS** qo'shildi.`
+    );
   } catch (error) {
-    console.error("Tasdiqlash xatosi:", error);
-    await ctx.answerCbQuery(`❌ Xatolik: ${error.message}`, { show_alert: true });
+    console.error("Tasdiqlashda xatolik:", error);
+    // Qisqa xabar berish orqali MESSAGE_TOO_LONG xatosining oldi olinadi
+    await ctx.answerCbQuery("❌ Baza xatosi! Admin panelini tekshiring.", { show_alert: true });
   }
 });
 
 // 4. Admin "❌ Rad etish" tugmasini bosganda
-bot.action(/^reject_(.+)$/, async (ctx) => {
-  const depositId = ctx.match[1];
+bot.action(/^reject_(\d+)$/, async (ctx) => {
+  const userId = ctx.match[1];
 
   try {
-    await ctx.answerCbQuery("Rad etilmoqda...");
-
-    const depositRef = db.collection("deposits").doc(depositId);
-    const depositDoc = await depositRef.get();
-
-    if (!depositDoc.exists || depositDoc.data().status !== "pending") {
-      return ctx.answerCbQuery("So'rov allaqachon ko'rib chiqilgan!", {
-        show_alert: true,
-      });
-    }
-
-    const depositData = depositDoc.data();
-
-    // Statusni 'rejected' qilish
-    await depositRef.update({
-      status: "rejected",
-      rejectedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    // Foydalanuvchiga rad etilgani haqida xabar berish
-    await ctx.telegram.sendMessage(
-      depositData.userId,
-      `❌ Sizning **${depositData.amount.toLocaleString()} so'm**lik depozit so'rovingiz rad etildi.`,
+    await ctx.answerCbQuery("❌ To'lov rad etildi");
+    await ctx.editMessageCaption(
+      `${ctx.callbackQuery.message.caption}\n\n❌ **STATUS:** Rad etildi`,
       { parse_mode: "Markdown" }
     );
 
-    // Admin chatidagi matnni yangilash
-    await ctx.editMessageText(
-      `${ctx.callbackQuery.message.text}\n\n❌ **HOLAT: Rad etildi**`,
-      { parse_mode: "Markdown" }
+    await bot.telegram.sendMessage(
+      userId,
+      "❌ Kechirasiz, siz yuborgan to'lov cheki rad etildi."
     );
   } catch (error) {
-    console.error("Rad etish xatosi:", error);
-    await ctx.answerCbQuery("Xatolik yuz berdi!", { show_alert: true });
+    console.error("Rad etishda xatolik:", error);
+    await ctx.answerCbQuery("❌ Xatolik yuz berdi", { show_alert: true });
   }
 });
 

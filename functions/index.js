@@ -2,38 +2,41 @@ const admin = require("firebase-admin");
 const express = require("express");
 const cors = require("cors");
 
-// Render'ga yuklangan serviceAccountKey.json faylini ulash
-let serviceAccount;
-try {
-  serviceAccount = require("./serviceAccountKey.json");
-} catch (e) {
-  console.log("serviceAccountKey.json fayli topilmadi, standart muhit ishlatilmoqda.");
-}
-
-// Firebase Admin SDK'ni ishga tushirish
+// Firebase Admin SDK'ni xavfsiz ishga tushirish
 if (!admin.apps.length) {
-  if (serviceAccount) {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
-    });
-  } else {
-    admin.initializeApp();
+  let credential;
+
+  // 1. Render Environment Variables tekshiruvi
+  if (process.env.FIREBASE_CONFIG_JSON) {
+    try {
+      const serviceAccount = JSON.parse(process.env.FIREBASE_CONFIG_JSON);
+      credential = admin.credential.cert(serviceAccount);
+    } catch (err) {
+      console.error("FIREBASE_CONFIG_JSON'ni o'qishda xatolik:", err);
+    }
   }
+
+  // 2. Aks holda local/secret fayldan o'qish
+  if (!credential) {
+    try {
+      const serviceAccount = require("./serviceAccountKey.json");
+      credential = admin.credential.cert(serviceAccount);
+    } catch (err) {
+      console.warn("serviceAccountKey.json topilmadi, standart sozlama ishlatilmoqda.");
+    }
+  }
+
+  admin.initializeApp(credential ? { credential } : {});
 }
 
-// bot.js faylidan bot obyektini import qilish
 const bot = require("./bot");
-
 const app = express();
 
-// Middleware sozlamalari
 app.use(cors({ origin: true }));
 app.use(express.json());
 
-// Telegram Webhook yo'lagi (Endpoint)
 app.post("/webhook", async (req, res) => {
   try {
-    // Telegramdan kelayotgan har bir hodisani Telegraf botiga uzatish
     await bot.handleUpdate(req.body, res);
   } catch (error) {
     console.error("Webhookda xatolik:", error);
@@ -43,12 +46,10 @@ app.post("/webhook", async (req, res) => {
   }
 });
 
-// Qo'shimcha: Mini App yoki Veb sayt uchun REST API (ixtiyoriy)
 app.get("/health", (req, res) => {
   res.status(200).send("Bot API muvaffaqiyatli ishlamoqda!");
 });
 
-// Render serverini doimiy faol ushlab turish uchun port tinglovchisi
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server ${PORT}-portda muvaffaqiyatli ishga tushdi`);

@@ -59,11 +59,11 @@ async function poll() {
             const parts = dataStr.split('_');
             
             let userId = parts[1];
-            let amountStr = parts[2];
+            // Oxirgi qism har doim summa bo'lishini ta'minlaymiz
+            let amountStr = parts[parts.length - 1];
             let amount = Number(amountStr);
 
-            // Xavfsizlik tekshiruvi: Agar summa 1000 so'mdan kam bo'lsa yoki ID bilan bir xil bo'lib qolsa
-            if (isNaN(amount) || amount < 1000 || amount > 10000000 || String(amount) === String(userId)) {
+            if (isNaN(amount) || amount < 1000 || amount > 10000000) {
               await answerCallbackQuery(query.id, `Xatolik: Noto'g'ri summa aniqlandi (${amountStr})!`, true);
               await editMessageCaption(chatId, messageId, `❌ XATOLIK: Summa noto'g'ri shakllangan!\nID: ${userId}\nSumma: son emas yoki xato`);
               continue;

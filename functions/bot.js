@@ -58,14 +58,18 @@ async function poll() {
           if (dataStr.startsWith('approve_')) {
             const parts = dataStr.split('_');
             
-            // ID va summani tartibidan qat'iy nazar to'g'ri ajratib olamiz
-            let userId, amount;
-            if (parts[1] && parts[1].length >= 8) {
-              userId = parts[1];
-              amount = Number(parts[2] || 0);
-            } else {
-              amount = Number(parts[1] || 0);
-              userId = parts[2];
+            let userId = parts[1];
+            let amountStr = parts[2];
+            
+            let amount = Number(amountStr);
+            if (isNaN(amount)) {
+              for (let p of parts) {
+                if (!isNaN(p) && p.length < 8 && Number(p) > 0) {
+                  amount = Number(p);
+                } else if (!isNaN(p) && p.length >= 8) {
+                  userId = p;
+                }
+              }
             }
 
             try {
@@ -75,6 +79,11 @@ async function poll() {
               let currentBalance = 0;
               if (doc.exists) {
                 currentBalance = Number(doc.data().balance || 0);
+              }
+
+              if (isNaN(amount) || amount <= 0) {
+                await answerCallbackQuery(query.id, `Xatolik: Summa topilmadi (${amountStr})`, true);
+                return;
               }
 
               await userRef.set({ 

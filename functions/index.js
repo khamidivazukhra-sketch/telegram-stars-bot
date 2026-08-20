@@ -33,11 +33,11 @@ const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
 
-// 📌 Public papkasidagi HTML va statik fayllarni ulash
-app.use(express.static(path.join(__dirname, "public")));
+// 📌 Public papkasi bir qadam tepada bo'lgani uchun "../public" qilindi
+app.use(express.static(path.join(__dirname, "../public")));
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "../public", "index.html"));
 });
 
 app.post("/webhook", async (req, res) => {

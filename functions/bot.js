@@ -4,9 +4,12 @@ import fs from 'fs';
 
 const serviceAccount = JSON.parse(fs.readFileSync('./serviceAccountKey.json', 'utf8'));
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+// Firebase faqat bir marta ulanishini ta'minlaymiz
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+}
 
 const db = admin.firestore();
 
@@ -59,7 +62,6 @@ async function poll() {
             const amount = Number(parts[2]);
 
             try {
-              // Foydalanuvchini bazadan qidirib topamiz yoki yangi yaratamiz
               const userRef = db.collection('users').doc(userId);
               const doc = await userRef.get();
 
@@ -68,7 +70,6 @@ async function poll() {
                 currentBalance = Number(doc.data().balance || 0);
               }
 
-              // Balansni yangilash
               await userRef.set({ 
                 balance: currentBalance + amount 
               }, { merge: true });

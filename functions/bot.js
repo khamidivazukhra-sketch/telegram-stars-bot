@@ -4,7 +4,6 @@ import fs from 'fs';
 
 const serviceAccount = JSON.parse(fs.readFileSync('./serviceAccountKey.json', 'utf8'));
 
-// Firebase faqat bir marta ulanishini ta'minlaymiz
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
@@ -58,11 +57,19 @@ async function poll() {
 
           if (dataStr.startsWith('approve_')) {
             const parts = dataStr.split('_');
-            const userId = parts[1];
-            const amount = Number(parts[2]);
+            
+            // ID va summani tartibidan qat'iy nazar to'g'ri ajratib olamiz
+            let userId, amount;
+            if (parts[1] && parts[1].length >= 8) {
+              userId = parts[1];
+              amount = Number(parts[2] || 0);
+            } else {
+              amount = Number(parts[1] || 0);
+              userId = parts[2];
+            }
 
             try {
-              const userRef = db.collection('users').doc(userId);
+              const userRef = db.collection('users').doc(String(userId));
               const doc = await userRef.get();
 
               let currentBalance = 0;
@@ -74,8 +81,8 @@ async function poll() {
                 balance: currentBalance + amount 
               }, { merge: true });
               
-              await answerCallbackQuery(query.id, `Balansga ${amount} UZS qo'shildi!`, true);
-              await editMessageCaption(chatId, messageId, `✅ TOLOV TASDIQLANDI!\n\nID: ${userId}\nSumma: ${amount} UZS`);
+              await answerCallbackQuery(query.id, `Balansga ${amount.toLocaleString('uz-UZ')} UZS qo'shildi!`, true);
+              await editMessageCaption(chatId, messageId, `✅ TOLOV TASDIQLANDI!\n\nID: ${userId}\nSumma: ${amount.toLocaleString('uz-UZ')} UZS`);
             } catch (e) {
               console.error("DB error:", e);
               await answerCallbackQuery(query.id, 'Bazaga yozishda xatolik!');

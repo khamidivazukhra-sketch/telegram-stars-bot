@@ -1,6 +1,7 @@
 const admin = require("firebase-admin");
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 if (!admin.apps.length) {
   let credential;
@@ -31,6 +32,13 @@ const app = express();
 
 app.use(cors({ origin: true }));
 app.use(express.json());
+
+// 📌 Public papkasidagi HTML va statik fayllarni ulash
+app.use(express.static(path.join(__dirname, "public")));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 app.post("/webhook", async (req, res) => {
   try {

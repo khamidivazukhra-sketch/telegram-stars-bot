@@ -334,7 +334,6 @@ function openStarsShop(){
   const shop = document.getElementById('starsShop');
   shop.style.display='flex';
   showStarStep('starsHome');
-  loadBalance();
 }
 
 function showStarStep(id){
@@ -342,26 +341,34 @@ function showStarStep(id){
   document.getElementById(id).classList.add('active');
 }
 
-async function loadBalance(){
+// REAL-TIME BALANS TINGLOVCHISI
+let balanceUnsubscribe = null;
+function listenBalance(){
   const currentUser = window.Telegram?.WebApp?.initDataUnsafe?.user || tgUser || {};
-  if(!currentUser.id){
-    document.getElementById('secureBalance').textContent='0 UZS';
+  if(!currentUser.id) {
+    document.getElementById('secureBalance').textContent = '0 UZS';
     return;
   }
-  try{
-    const ref = db.collection('users').doc(String(currentUser.id));
-    const doc = await ref.get();
+  
+  if(balanceUnsubscribe) balanceUnsubscribe();
+
+  const userRef = db.collection('users').doc(String(currentUser.id));
+  balanceUnsubscribe = userRef.onSnapshot((doc) => {
     if(doc.exists){
       const data = doc.data();
-      document.getElementById('secureBalance').textContent=`${Number(data.balance||0).toLocaleString('uz-UZ')} UZS`;
-    }else{
-      await ref.set({balance: 0, username: currentUser.username||''}, {merge: true});
-      document.getElementById('secureBalance').textContent='0 UZS';
+      const currentBal = Number(data.balance || 0);
+      document.getElementById('secureBalance').textContent = `${currentBal.toLocaleString('uz-UZ')} UZS`;
+    } else {
+      userRef.set({ balance: 0, username: currentUser.username || '' }, { merge: true });
+      document.getElementById('secureBalance').textContent = '0 UZS';
     }
-  }catch(e){
-    document.getElementById('secureBalance').textContent='0 UZS';
-  }
+  }, (err) => {
+    console.error("Balance listen error:", err);
+  });
 }
+
+// Ilova ishga tushishi bilan balansni tinglash
+listenBalance();
 
 function startDeposit(){
   document.getElementById('depositAmount').value='';
@@ -406,10 +413,9 @@ function confirmRecipient(){
   document.getElementById('payPrice').textContent=`${selectedPrice.toLocaleString('uz-UZ')} UZS`;
   document.getElementById('payRecipient').textContent=u;
   showStarStep('payStep');
-  loadBalance();
 }
 
-function backShop(){showStarStep('starsHome');loadBalance()}
+function backShop(){showStarStep('starsHome');}
 function backRecipient(){showStarStep('recipientStep')}
 
 function copyCard(){
@@ -432,7 +438,6 @@ function loadDepositReceipt(e){
   rd.readAsDataURL(file);
 }
 
-// TOG'RILANGAN DEPOSIT FUNKSIYASI
 async function submitDepositOrder(){
   const amountInput = document.getElementById('depositAmount').value;
   const amount = Number(String(amountInput).replace(/[^\d]/g, ''));
@@ -465,7 +470,6 @@ async function submitDepositOrder(){
     formData.append('photo', selectedReceiptFile);
     formData.append('caption', `💳 YANGI TO'LOV CHEKI!\n\n👤 Foydalanuvchi: @${currentUsername} (ID: ${currentUserId})\n💰 Summa: ${amount.toLocaleString('uz-UZ')} UZS\n\nBalansni qo'shish uchun quyidagi tugmani bosing.`);
     
-    // Tugmaga toza va bo'sh joylarsiz raqamlar uzatiladi
     const replyMarkup = {
       inline_keyboard: [
         [
@@ -548,7 +552,6 @@ async function submitBalancePurchase(){
       document.getElementById('successItem').textContent = itemName;
       document.getElementById('successTarget').textContent = selectedRecipient;
       showStarStep('successStep');
-      loadBalance();
     } else {
       throw new Error(data.description || "Telegram'ga yuborishda xato");
     }

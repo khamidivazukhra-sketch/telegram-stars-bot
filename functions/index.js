@@ -1,11 +1,24 @@
-const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const express = require("express");
 const cors = require("cors");
 
+// Render'ga yuklangan serviceAccountKey.json faylini ulash
+let serviceAccount;
+try {
+  serviceAccount = require("./serviceAccountKey.json");
+} catch (e) {
+  console.log("serviceAccountKey.json fayli topilmadi, standart muhit ishlatilmoqda.");
+}
+
 // Firebase Admin SDK'ni ishga tushirish
 if (!admin.apps.length) {
-  admin.initializeApp();
+  if (serviceAccount) {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+  } else {
+    admin.initializeApp();
+  }
 }
 
 // bot.js faylidan bot obyektini import qilish
@@ -35,5 +48,8 @@ app.get("/health", (req, res) => {
   res.status(200).send("Bot API muvaffaqiyatli ishlamoqda!");
 });
 
-// Firebase Cloud Function sifatida eksport qilish
-exports.api = functions.https.onRequest(app);
+// Render serverini doimiy faol ushlab turish uchun port tinglovchisi
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server ${PORT}-portda muvaffaqiyatli ishga tushdi`);
+});

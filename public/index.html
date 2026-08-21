@@ -2,7 +2,6 @@
 <html lang="uz">
 <head>
 <meta charset="UTF-8">
-<!-- ver: 3.4-promofix -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Games & Stars Shop</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -10,15 +9,23 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{width:100%;min-height:100vh;background:#050505;color:#eee;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;overflow-x:hidden}
-body{background:radial-gradient(circle at 50% 12%,#292929 0,#111 46%,#050505 100%);padding-bottom:40px;position:relative}
+html,body{width:100%;height:100%;background:#030303;color:#eee;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;overflow:hidden}
+
+/* PC va noutbuklarda telefon o'lchamini simulyatsiya qilish uchun o'rab turuvchi qism */
+body{display:flex;justify-content:center;align-items:center}
+.app-container{width:100%;max-width:460px;height:100%;max-height:100vh;background:radial-gradient(circle at 50% 12%,#292929 0,#111 46%,#050505 100%);position:relative;overflow-y:auto;overflow-x:hidden;box-shadow:0 0 40px rgba(0,0,0,0.8)}
+
+@media(min-width:461px){
+  .app-container{height:92vh;border-radius:36px;border:10px solid #1a1a1a}
+}
+
 button,input{font:inherit}
 button{cursor:pointer}
 
-.screen{display:none;width:100%;min-height:100vh;padding:16px;position:absolute;top:0;left:0;background:radial-gradient(circle at 50% 12%,#292929 0,#111 46%,#050505 100%);animation:fade .28s ease}
+.screen{display:none;width:100%;min-height:100%;padding:16px;position:absolute;top:0;left:0;background:radial-gradient(circle at 50% 12%,#292929 0,#111 46%,#050505 100%);animation:fade .28s ease;padding-bottom:70px}
 .screen.active-screen{display:block;position:relative}
 
-#home{display:flex;align-items:center;justify-content:center;text-align:center;min-height:100vh;padding:24px}
+#home{display:flex;align-items:center;justify-content:center;text-align:center;min-height:100%;padding:24px}
 .home-content{width:100%;max-width:430px}
 .logo{width:82px;height:82px;margin:auto auto 22px;border-radius:26px;display:grid;place-items:center;background:linear-gradient(135deg,#fff,#aaa,#555);box-shadow:0 18px 60px #0009}
 .logo svg{width:38px;fill:#111}
@@ -33,28 +40,28 @@ button{cursor:pointer}
 .button:active{transform:scale(.97)}
 .dark-button{background:linear-gradient(145deg,#222,#0e0e0e);color:#eee;border:1px solid #ffffff18}
 .stars-home{background:radial-gradient(circle at 15% 0,#ffffff12,transparent 34%),linear-gradient(145deg,#232323,#0a0a0a)}
-.header{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;width:100%;max-width:520px;margin:0 auto 15px}
+.header{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;width:100%;margin:0 auto 15px}
 .back{width:44px;height:44px;border-radius:14px;border:1px solid #ffffff14;background:#ffffff09;color:#fff;font-size:20px}
 .title{text-align:center;font-weight:800;font-size:19px}
-.center{width:100%;max-width:440px;margin:auto;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.center{width:100%;margin:auto;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .info{color:#888;font-size:14px;margin-bottom:16px}
 .restart{width:200px;height:48px;border-radius:16px;border:1px solid #ffffff12;background:#ffffff08;color:#fff;font-weight:700;margin-top:22px}
 
-.puzzle{width:min(82vw,360px);aspect-ratio:1;padding:7px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;border-radius:24px;background:#ffffff08;border:1px solid #ffffff10}
+.puzzle{width:min(82vw,300px);aspect-ratio:1;padding:7px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;border-radius:24px;background:#ffffff08;border:1px solid #ffffff10}
 .tile{border:0;border-radius:16px;background:linear-gradient(145deg,#fff,#aaa);color:#111;font-size:30px;font-weight:900}
 .empty{opacity:0}
 .xo-menu h2{font-size:29px}
 .xo-menu p{color:#888;margin-top:5px}
 .choose{margin-top:20px;color:#aaa;font-size:12px}
-.sizes{display:flex;gap:10px;margin:12px 0}
+.sizes{display:flex;gap:10px;margin:12px 0;justify-content:center}
 .size{width:85px;height:48px;border-radius:14px;border:1px solid #ffffff12;background:#ffffff08;color:#fff;font-weight:800}
 .size.active{background:#fff;color:#111}
-.board{width:min(85vw,380px);aspect-ratio:1;margin:auto;display:grid;gap:6px;padding:6px;border-radius:22px;background:#ffffff08;border:1px solid #ffffff10}
+.board{width:min(85vw,320px);aspect-ratio:1;margin:auto;display:grid;gap:6px;padding:6px;border-radius:22px;background:#ffffff08;border:1px solid #ffffff10}
 .cell{border:0;border-radius:13px;background:#ffffff0f;color:#fff;font-size:clamp(24px,8vw,42px);font-weight:900}
 .cell.x{background:linear-gradient(145deg,#fff,#aaa);color:#111}
 .cell.o{background:linear-gradient(145deg,#333,#111)}
 
-.mine-wrapper{width:100%;max-width:460px;margin:auto;display:flex;flex-direction:column;position:relative;padding-bottom:90px}
+.mine-wrapper{width:100%;display:flex;flex-direction:column;position:relative;padding-bottom:90px}
 .tab-content{display:none}
 .tab-content.active{display:block}
 .mine-card,.list-card{background:linear-gradient(145deg,#ffffff0d,#ffffff02);border:1px solid #ffffff0e;border-radius:25px;padding:20px}
@@ -65,7 +72,7 @@ button{cursor:pointer}
 .energy{display:flex;justify-content:space-between;color:#888;font-size:11px;margin-bottom:7px}
 .bar{height:8px;background:#ffffff08;border:1px solid #ffffff08;border-radius:99px;overflow:hidden}
 .fill{height:100%;background:linear-gradient(90deg,#777,#fff)}
-.bottom-nav{position:fixed;left:16px;right:16px;bottom:16px;max-width:460px;margin:0 auto;height:68px;border:1px solid #ffffff0e;border-radius:22px;background:#121212ee;backdrop-filter:blur(20px);display:flex;z-index:99}
+.bottom-nav{position:absolute;left:16px;right:16px;bottom:16px;height:68px;border:1px solid #ffffff0e;border-radius:22px;background:#121212ee;backdrop-filter:blur(20px);display:flex;z-index:99}
 .nav-item{flex:1;border:0;background:none;color:#666;font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
 .nav-item.active{color:#fff}
 .nav-item svg{width:22px;height:22px;fill:currentColor}
@@ -78,7 +85,7 @@ button{cursor:pointer}
 .exchange-btn{padding:10px 15px;border-radius:12px;background:#ffffff0d;border:1px solid #ffffff12;color:#fff;font-weight:800}
 
 .stars-page{background:radial-gradient(circle at 50% 0,#ffffff12,transparent 30%),#070707;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
-.stars-wrap{width:100%;max-width:440px;margin:0 auto;padding-bottom:50px;display:flex;flex-direction:column;align-items:center}
+.stars-wrap{width:100%;padding-bottom:50px;display:flex;flex-direction:column;align-items:center}
 .stars-step{display:none;width:100%}
 .stars-step.active{display:block;animation:fade .25s}
 
@@ -175,6 +182,7 @@ button{cursor:pointer}
 </head>
 <body>
 
+<div class="app-container">
 <section id="home" class="screen active-screen"><div class="home-content">
 <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2l2.8 7.2L22 12l-7.2 2.8L12 22l-2.8-7.2L2 12l7.2-2.8L12 2z"/></svg></div>
 <h1>Coming Soon</h1><p class="subtitle" id="welcomeSubtitle">Something amazing is on the way</p><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
@@ -254,7 +262,6 @@ button{cursor:pointer}
       </div>
     </div>
 
-    <!-- PROMOKOD BO'LIMI (PREMIUMDAN KEYIN) -->
     <div class="section-title" style="margin-top:20px">BONUS PROMOKOD</div>
     <div class="balance-card">
       <div class="balance-top"><span>PROMO KODNI KIRITING</span><span>BONUS</span></div>
@@ -282,7 +289,7 @@ button{cursor:pointer}
       
       <div id="giftOnlySection" style="display: none;">
         <label class="label-input">YUBORISH REJIMI</label>
-        <div class="modes-grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="modes-grid">
           <div id="modeAnon" class="mode-btn active" onclick="setSendMode('anonim')">👻 Anonim</div>
           <div id="modeCEO" class="mode-btn" onclick="setSendMode('ceo')">👑 CEO nomidan</div>
         </div>
@@ -362,7 +369,7 @@ button{cursor:pointer}
     </div>
   </div>
 </div>
-</section>
+</div>
 
 <div id="toast" class="toast"></div>
 
@@ -416,7 +423,8 @@ function hideAll(){document.querySelectorAll('.screen').forEach(s=>s.classList.r
 function showScreen(id){
   hideAll();
   document.getElementById(id).classList.add('active-screen');
-  window.scrollTo({top: 0, behavior: 'instant'});
+  const appContainer = document.querySelector('.app-container');
+  if(appContainer) appContainer.scrollTo({top: 0, behavior: 'instant'});
 }
 function goHome(){showScreen('home')}
 function openPuzzle(){showScreen('puzzleScreen');startPuzzle()}
@@ -431,7 +439,8 @@ function openStarsShop(){
 function showStarStep(id){
   document.querySelectorAll('#starsShop .stars-step').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  window.scrollTo({top: 0, behavior: 'instant'});
+  const appContainer = document.querySelector('.app-container');
+  if(appContainer) appContainer.scrollTo({top: 0, behavior: 'instant'});
 }
 
 function switchShopSubtab(tabName){
@@ -482,10 +491,8 @@ function listenBalance(){
 
 listenBalance();
 
-// --- PROMOKODLARNI BAZAGA AVTO-QO'SHISH VA TEKSHIRISH ---
 async function initializePromosInDB() {
   const defaultPromos = [
-    // 3K (10 ta)
     {code: "FLX-3K-7x9Q2m", amount: 3000},
     {code: "FLX-3K-4p8W1k", amount: 3000},
     {code: "FLX-3K-9z2R5t", amount: 3000},
@@ -496,20 +503,17 @@ async function initializePromosInDB() {
     {code: "FLX-3K-5t1N3p", amount: 3000},
     {code: "FLX-3K-3w8J9v", amount: 3000},
     {code: "FLX-3K-7h2V4x", amount: 3000},
-    // 5K (6 ta)
     {code: "FLX-5K-8m2Q9p", amount: 5000},
     {code: "FLX-5K-4x7T1k", amount: 5000},
     {code: "FLX-5K-9v3W6s", amount: 5000},
     {code: "FLX-5K-1p5Z8n", amount: 5000},
     {code: "FLX-5K-6q2R4m", amount: 5000},
     {code: "FLX-5K-3t9Y7v", amount: 5000},
-    // 10K (5 ta)
     {code: "FLX-10K-5m8Q2p", amount: 10000},
     {code: "FLX-10K-9k3W7x", amount: 10000},
     {code: "FLX-10K-2v6T4s", amount: 10000},
     {code: "FLX-10K-7p1N9m", amount: 10000},
     {code: "FLX-10K-4r8Y3k", amount: 10000},
-    // 20K (5 ta)
     {code: "FLX-20K-3q7M9v", amount: 20000},
     {code: "FLX-20K-8x2W4p", amount: 20000},
     {code: "FLX-20K-1t6R8s", amount: 20000},
@@ -577,7 +581,6 @@ async function activatePromo(){
     toast(err.message || 'Xatolik yuz berdi.');
   }
 }
-// ----------------------------------------------------
 
 function startDeposit(){
   document.getElementById('depositAmount').value='';
@@ -855,7 +858,7 @@ function switchTab(id,title,btn){document.querySelectorAll('#mineScreen .tab-con
 function requestExchange(cost){if(coins<cost){toast('Coins yetarli emas.');return}coins-=cost;saveMining();toast('Exchange so‘rovi yaratildi.')}
 
 /* puzzle */
-let puzzle=[1,2,3,4,5,6,7,8,0];const solved=[1,2,3,4,5,6,7,8,0];
+let puzzle=[1,2,3,4,5,6,7,8,0],solved=[1,2,3,4,5,6,7,8,0];
 function startPuzzle(){puzzle=[...solved];for(let k=0;k<100;k++){const e=puzzle.indexOf(0),m=[],r=Math.floor(e/3),c=e%3;if(r>0)m.push(e-3);if(r<2)m.push(e+3);if(c>0)m.push(e-1);if(c<2)m.push(e+1);const j=m[Math.floor(Math.random()*m.length)];[puzzle[e],puzzle[j]]=[puzzle[j],puzzle[e]]}renderPuzzle()}
 function renderPuzzle(){const box=document.getElementById('puzzle');box.innerHTML='';puzzle.forEach((v,i)=>{const b=document.createElement('button');b.className='tile';if(v===0)b.classList.add('empty');else{b.textContent=v;b.onclick=()=>movePuzzle(i)}box.appendChild(b)})}
 function movePuzzle(i){const e=puzzle.indexOf(0),m=[],r=Math.floor(e/3),c=e%3;if(r>0)m.push(e-3);if(r<2)m.push(e+3);if(c>0)m.push(e-1);if(c<2)m.push(e+1);if(!m.includes(i))return;[puzzle[e],puzzle[i]]=[puzzle[i],puzzle[e]];renderPuzzle()}
@@ -867,7 +870,7 @@ function startXO(){showScreen('xoGame');xo=Array(xoSize*xoSize).fill('');human=M
 function renderXO(){const board=document.getElementById('board');board.innerHTML='';board.style.gridTemplateColumns=`repeat(${xoSize},1fr)`;xo.forEach((v,i)=>{const b=document.createElement('button');b.className='cell';if(v){b.textContent=v;b.classList.add(v.toLowerCase())}b.onclick=()=>humanMove(i);board.appendChild(b)})}
 function checkXO(p){const n=xoSize;for(let r=0;r<n;r++){let ok=true;for(let c=0;c<n;c++)if(xo[r*n+c]!==p)ok=false;if(ok)return true}for(let c=0;c<n;c++){let ok=true;for(let r=0;r<n;r++)if(xo[r*n+c]!==p)ok=false;if(ok)return true}let ok=true;for(let i=0;i<n;i++)if(xo[i*n+i]!==p)ok=false;if(ok)return true;ok=true;for(let i=0;i<n;i++)if(xo[i*n+(n-1-i)]!==p)ok=false;return ok}
 function humanMove(i){if(xoOver||turn!==human||xo[i])return;xo[i]=human;if(checkXO(human)){xoOver=true;renderXO();toast('Siz yutdingiz!');return}if(xo.every(Boolean)){xoOver=true;toast('Durrang!');return}turn=ai;document.getElementById('status').textContent='PC is thinking...';renderXO();setTimeout(aiMove,280)}
-function aiMove(){if(xoOver)return;const a=xo.map((v,i)=>v===''?i:null).filter(v=>v!==null);if(!a.length)return;let move;for(const i of a){xo[i]=ai;if(checkXO(ai)){xo[i]='';move=i;break}xo[i]=''}if(move===undefined)for(const i of a){xo[i]=human;if(checkXO(human)){xo[i]='';move=i;break}xo[i]=''}if(move===undefined){const c=Math.floor(xo.length/2);move=xo[c]===''?c:a[Math.floor(Math.random()*a.length)]}xo[move]=ai;if(checkXO(ai)){xoOver=true;renderXO();toast('PC yutdi.');return}if(xo.every(Boolean)){xoOver=true;toast('Durrang!');return}turn=human;document.getElementById('status').textContent='Your turn';renderXO()}
+function aiMove(){if(xoOver)return;const a=xo.map((v,i)=>v===''?i:null).filter(v=>v!==null);if(!a.length)return;let move;for(const i of a){xo[i]=ai;if(checkXO(ai)){xo[i]='';move=i;break}xo[i]=""}if(move===undefined)for(const i of a){xo[i]=human;if(checkXO(human)){xo[i]='';move=i;break}xo[i]=""}if(move===undefined){const c=Math.floor(xo.length/2);move=xo[c]===''?c:a[Math.floor(Math.random()*a.length)]}xo[move]=ai;if(checkXO(ai)){xoOver=true;renderXO();toast('PC yutdi.');return}if(xo.every(Boolean)){xoOver=true;toast('Durrang!');return}turn=human;document.getElementById('status').textContent='Your turn';renderXO()}
 
 goHome();
 updateMiningUI();
